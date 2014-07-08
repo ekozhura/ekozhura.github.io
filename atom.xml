@@ -4,7 +4,7 @@
   <title><![CDATA[Machine Musicianship]]></title>
   <link href="http://ekozhura.github.io/atom.xml" rel="self"/>
   <link href="http://ekozhura.github.io/"/>
-  <updated>2014-07-08T20:02:30+03:00</updated>
+  <updated>2014-07-08T20:33:44+03:00</updated>
   <id>http://ekozhura.github.io/</id>
   <author>
     <name><![CDATA[Evgeny Kozhura]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Юнит-генераторы.]]></title>
+    <title type="html"><![CDATA[Юнит-генераторы]]></title>
     <link href="http://ekozhura.github.io/unit-generators-part-1"/>
     <updated>2014-07-08T19:01:27+03:00</updated>
     <id>http://ekozhura.github.io/unit-generators-part-1</id>
@@ -27,7 +27,7 @@
 
 <p>По мнению Метьюса, такой подход обеспечивал композитора гибкостью и простотой использования. С одной стороны, уже не было необходимости вручную определять значение каждого отсчета в цифровом сигнале (как бы сейчас ни смешно это звучало). С другой стороны, создание инструмента для синтеза по принципу черного ящика было слишком дорогим развлечением на то время. С юнит-генераторами композитор сам определял структуру, и он решал много или мало компонентов поместить.</p>
 
-<p>Для обозначения юнит-генераторов Мэтьюс использовал наименования компонентов аналоговых синтезаторов. Так, среди юнит-генераторов есть осцилляторы (<strong>OSC</strong>), фильтры (<strong>FLT</strong>), генераторы огибающих (<strong>ENV</strong>). Но ими коллекция блоков не ограничивается &ndash; еще сумматоры (<strong>ADD2</strong>, <strong>ADD3</strong>, <strong>ADD4</strong>), мультипликаторы (<strong>MLT</strong>), блок для вывода сигналов (<strong>OUT</strong>), генераторы случайных значений (<strong>RAN</strong>, <strong>RAH</strong>).</p>
+<p>Для обозначения юнит-генераторов Метьюс использовал наименования компонентов аналоговых синтезаторов. Так, среди юнит-генераторов есть осцилляторы (<strong>OSC</strong>), фильтры (<strong>FLT</strong>), генераторы огибающих (<strong>ENV</strong>). Но ими коллекция блоков не ограничивается &ndash; еще сумматоры (<strong>ADD2</strong>, <strong>ADD3</strong>, <strong>ADD4</strong>), мультипликаторы (<strong>MLT</strong>), блок для вывода сигналов (<strong>OUT</strong>), генераторы случайных значений (<strong>RAN</strong>, <strong>RAH</strong>).</p>
 
 <p>Программа составляется таким образом, чтобы выходной сигнал одного юнит-генератора поступал на вход другого, и так вплоть до блока вывода. Структуру программы затем можно представить в виде блок-схемы (MUSIC V):</p>
 
@@ -94,7 +94,7 @@
 <li id="fn:1">
 <p>Примеры программ и диаграмма взяты из книги M.Mathews <em>&ldquo;The Technology of Computer Music&rdquo;</em>, 1969.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
 <li id="fn:2">
-<p>Этот факт был упомянут в примечании к интервью с Максом Мэтьюсом для Computer Music Journal в 2008 году.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<p>Этот факт был упомянут в примечании к интервью с Максом Метьюсом для Computer Music Journal в 2008 году.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
 </ol>
 </div>
 
