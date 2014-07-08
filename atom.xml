@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Machine Musicianship]]></title>
+  <link href="http://ekozhura.github.io/atom.xml" rel="self"/>
+  <link href="http://ekozhura.github.io/"/>
+  <updated>2014-07-08T19:17:58+03:00</updated>
+  <id>http://ekozhura.github.io/</id>
+  <author>
+    <name><![CDATA[Evgeny Kozhura]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Юнит-генераторы.]]></title>
+    <link href="http://ekozhura.github.io/unit-generators-part-1"/>
+    <updated>2014-07-08T19:01:27+03:00</updated>
+    <id>http://ekozhura.github.io/unit-generators-part-1</id>
+    <content type="html"><![CDATA[<p>Пионер компьютерной музыки Макс Метьюс в своем языке MUSIC III впервые реализовал (а в последующих версиях и развил) несколько важных идей. Впоследствии, эти идеи легли в основу многих современных языков для создания копьютерной музыки.</p>
+
+<!-- more -->
+
+
+<p>Одной из таких идей является концепция юнит-генераторов, согласно которой при написании программы применяются отдельные функциональные блоки. Каждый такой блок выполняет одну конкретную задачу по генерации или обработке аудиосигналов. Комбинируя эти блоки, пользователь имеет возможность создавать достаточно сложные программы.</p>
+
+<p>По мнению Метьюса, такой подход обеспечивал композитора гибкостью и простотой использования. С одной стороны, уже не было необходимости вручную определять значение каждого отсчета в цифровом сигнале (как бы сейчас ни смешно это звучало). С другой стороны, создание инструмента для синтеза по принципу черного ящика было слишком дорогим развлечением на то время. С юнит-генераторами композитор сам определял структуру, и он решал много или мало компонентов поместить.</p>
+
+<p>Для обозначения юнит-генераторов Мэтьюс использовал наименования компонентов аналоговых синтезаторов. Так, среди юнит-генераторов есть осцилляторы (<strong>OSC</strong>), фильтры (<strong>FLT</strong>), генераторы огибающих (<strong>ENV</strong>). Но ими коллекция блоков не ограничивается &ndash; еще сумматоры (<strong>ADD2</strong>, <strong>ADD3</strong>, <strong>ADD4</strong>), мультипликаторы (<strong>MLT</strong>), блок для вывода сигналов (<strong>OUT</strong>), генераторы случайных значений (<strong>RAN</strong>, <strong>RAH</strong>).</p>
+
+<p>Программа составляется таким образом, чтобы выходной сигнал одного юнит-генератора поступал на вход другого, и так вплоть до блока вывода. Структуру программы затем можно представить в виде блок-схемы (MUSIC V):</p>
+
+<p><img class="left thumb" src="http://ekozhura.github.io/images/block-diagram-music-v.jpg"></p>
+
+<p>Примеры программ на языке MUSIC V<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">10</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P5</span> <span class="nv">P6</span> <span class="nv">B2</span> <span class="nv">F1</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="nv">AD2</span> <span class="nv">P7</span> <span class="nv">V1</span> <span class="nv">B3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OUT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">0</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">P5</span> <span class="nv">P7</span> <span class="nv">B2</span> <span class="nv">F3</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">P6</span> <span class="nv">P7</span> <span class="nv">B3</span> <span class="nv">F4</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">AD2</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">B2</span> <span class="nv">P8</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">V1</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">UT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">3</span> <span class="mf">.999</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">4</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.999</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.99</span> <span class="mi">50</span> <span class="mf">.99</span> <span class="mi">205</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">306</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">461</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">N0T</span> <span class="mi">0</span> <span class="mi">3</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">2000</span> <span class="mf">.0128</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nv">N0T</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">1</span> <span class="mi">2000</span> <span class="mi">0</span> <span class="mf">.0256</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nv">TER</span> <span class="mi">3</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Напрашивается аналогия с модульными синтезаторами, где используется тот же прием. Более того, может показаться, что это принцип и был изначально позаимствован у первых модульных синтезаторов. Интересно то, что выпуск первых коммерческих модульных синтезаторов пришелся на тот же период, что и выход MUSIC III &ndash; это первая половина 60-ых годов. Еще один пионер компьютерной музыки, Жан Клод Риссе, который в те годы работал в Bell Labs совместно с Максом Метьюсом, утверждал что Роберт Муг (создатель одного из первых коммерческих модульных синтезаторов) был осведомлен о разработках и идеях Макса. Жан Клод и Роберт переписывались какое-то время, обсуждая друг с другом эти идеи<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>.</p>
+
+<p>Впрочем, по словам самого Макса, выход его программы опередил Роберта Муга всего на пару лет, это была своего рода логическая эволюция цифровых и аналоговых синтезаторов, идея, витавшая в воздухе и реализованная инженерами  того времени независимо друг от друга. &ldquo;В любом случае, это было огромное преимущество, потому что музыкант, который имел представление о коммутации модулей синтезаторов Муга, мог понять как соединить юнит генераторы на компьютере&rdquo;, &ndash; заметил Метьюс.</p>
+
+<p>MUSIC V нашел свое развитие в языке Csound, где число юнит-генераторов (опкодов, в терминологии Csound) значительно возросло. Язык Max, который изначально использовался сугубо для управления внешними &ldquo;железными&rdquo; синтезаторами и DSP-процессорами, со временем эволюционировал в полноценную среду для синтеза аудио и обзавелся собственными юнит-генераторами (две наиболее популярных среды использующих язык Max &ndash; Pure Data и Max/MSP). SuperCollider и ChucK используют юнит-генераторы для обозначения и скомпилированных модулей для своих аудиодвижков, и специальных классов для работы с этими модулями.</p>
+
+<p>NI Reaktor и AudioMulch в эту компанию не входят, так как оперируют более высокоуровневыми абстракциями (синтезаторы, семплеры, драм-машины, эффекты) и не предполагают программирования, только коммутацию модулей (впрочем, с пятой версии в Reaktor предусмотрен режим разработки на низком уровне, аналогогичный Max).</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>Примеры программ и диаграмма взяты из книги M.Mathews <em>&ldquo;The Technology of Computer Music&rdquo;</em>, 1969.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>Этот факт был упомянут в примечании к интервью с Максом Мэтьюсом для Computer Music Journal в 2008 году.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[О языках]]></title>
+    <link href="http://ekozhura.github.io/about-languages"/>
+    <updated>2014-07-07T18:47:51+03:00</updated>
+    <id>http://ekozhura.github.io/about-languages</id>
+    <content type="html"><![CDATA[<p>Несколько слов о тематике блога &ndash; о языках и средах для синтеза аудио и алгоритмической композиции. Почему они все еще актуальны, несмотря на многообразие DAW и VST плагинов, и почему стоит изучить хотя бы один из них.</p>
+
+<!-- more -->
+
+
+<p>Первые языки программирования для синтеза аудио также были первыми (и единственными) программами для создания музыки. Они разрабатывались в НИИ, выполнялись на огромных и дорогих ЭВМ. С ними работали ученые и композиторы, чья деятельность предвосхитила облик компьютерной музыки на десятилетия.</p>
+
+<p>Но с тех пор многое изменилось. С появлением персональных компьютеров и постепенным наращиванием их мощностей, появилось разнообразное программное обеспечения для создания музыки. Стало возможным не только эмулировать реальные, &ldquo;железные&rdquo; синтезаторы, но и разрабатывать принципиально новые. Для создания партитур и ритмических рисунков уже нет необходимости использовать специальный синтаксис &ndash; им на смену пришло множество инструментов с графическим интерфейсом. Сочинение музыки на персональных компьютерах стало доступным многим, как профессиональным музыкантам и композиторам, так и любителям.</p>
+
+<p>Сейчас нет необходимости писать программный код &ndash; современные софтверные синтезаторы обладают широкими возможностями для определения всевозможных тембров. Алгоритмическая композиция постепенно проникает в коммерческие секвенсоры.</p>
+
+<p>И тем не менее, языки программирования и среды разработки продолжают свое существование, некоторые из них достаточно популярны. Объясняется это несколькими причинами.</p>
+
+<p>Во-первых, низкий (относительно) порог входа. Max/MSP, Csound, SuperCollider и др. относятся к классу предменто-специфических языков (domain-specific languages), их отличие от С++ или Java &ndash; это не только специализация в конкретной предметной области. В первую очередь они обладают необходимым набором абстракций для выполнения таких задач как синтез, фильтрация или вывод сигналов. В случае языков общего назначения, придется писать программы на более низком уровне и это требует б<strong>о</strong>льших усилий и знаний. К примеру, начать работу в Max/MSP можно даже не имея предварительного опыта программирования.</p>
+
+<p>Во-вторых, свобода действий. Работая с софтверными синтезаторами и секвенсорами мы постоянно имеем дело с ограничениями. Это вовсе не недостаток, ведь такие синтезаторы обладают достаточно внушительным функционалом. Но работая с программной средой, пользователь получает дополнительные возможности. И дело даже не в том, что мы ограничены только своим воображением. Насколько простым или насколько сложным будет такой инструмент &ndash; зависит только от нас. Свобода воли в действии.</p>
+
+<p>В-третьих, повторное использование. Мы неограничены стандартными библиотеками сред разработки. Классы, объекты, плагины, библиотеки распространяются разработчиками специально для дальнейшего использования сообществом. Например, библиотека BBCut2 (для SuperCollider) может быть использована в вашем проекте для автоматического слайсинга ударных и алгоритмического секвенсирования. Или библиотека FTM, расширяющая Max/MSP некоторыми сложными структурами данных (матрицы, словари, кортежи).</p>
+
+<p>В-четвертых, чаще всего это open-source проекты &ndash; распространяются бесплатно, поддерживаются многочисленным сообществом энтузиастов, с поддержкой нескольких операционных систем.</p>
+
+<p>И наконец,  подходящий инструмент для учебных целей. Даже скоротав пару вечеров за Max/MSP или Pure Data, можно извлечь ценный опыт. Хорошее подспорье для того чтобы усвоить различные методы синтеза, разобраться в способах обработки аудио.</p>
+]]></content>
+  </entry>
+  
+</feed>

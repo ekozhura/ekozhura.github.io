@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Юнит-генераторы. - Machine Musicianship</title>
+  <meta name="author" content="Evgeny Kozhura">
+
+  
+  <meta name="description" content="Юнит-генераторы. Добавлено 08.07.14 07:01PM Пионер компьютерной музыки Макс Метьюс в своем языке MUSIC III впервые реализовал (а в последующих &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ekozhura.github.io/unit-generators-part-1">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Machine Musicianship" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+
+</head>
+
+  <body>
+    <a href="/" class="home-icon">
+      <img src="/images/home.png"/>
+    </a>
+
+    <article role="article" class="full-single-article">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <h1>Юнит-генераторы.</h1>
+        <div class="meta">
+          Добавлено 
+
+
+
+
+
+
+
+
+  
+
+
+
+<time datetime="2014-07-08T19:01:27+03:00" pubdate data-updated="true">08.07.14 07:01PM</time>
+          
+
+
+        </div>
+        <p>Пионер компьютерной музыки Макс Метьюс в своем языке MUSIC III впервые реализовал (а в последующих версиях и развил) несколько важных идей. Впоследствии, эти идеи легли в основу многих современных языков для создания копьютерной музыки.</p>
+
+<!-- more -->
+
+
+<p>Одной из таких идей является концепция юнит-генераторов, согласно которой при написании программы применяются отдельные функциональные блоки. Каждый такой блок выполняет одну конкретную задачу по генерации или обработке аудиосигналов. Комбинируя эти блоки, пользователь имеет возможность создавать достаточно сложные программы.</p>
+
+<p>По мнению Метьюса, такой подход обеспечивал композитора гибкостью и простотой использования. С одной стороны, уже не было необходимости вручную определять значение каждого отсчета в цифровом сигнале (как бы сейчас ни смешно это звучало). С другой стороны, создание инструмента для синтеза по принципу черного ящика было слишком дорогим развлечением на то время. С юнит-генераторами композитор сам определял структуру, и он решал много или мало компонентов поместить.</p>
+
+<p>Для обозначения юнит-генераторов Мэтьюс использовал наименования компонентов аналоговых синтезаторов. Так, среди юнит-генераторов есть осцилляторы (<strong>OSC</strong>), фильтры (<strong>FLT</strong>), генераторы огибающих (<strong>ENV</strong>). Но ими коллекция блоков не ограничивается &ndash; еще сумматоры (<strong>ADD2</strong>, <strong>ADD3</strong>, <strong>ADD4</strong>), мультипликаторы (<strong>MLT</strong>), блок для вывода сигналов (<strong>OUT</strong>), генераторы случайных значений (<strong>RAN</strong>, <strong>RAH</strong>).</p>
+
+<p>Программа составляется таким образом, чтобы выходной сигнал одного юнит-генератора поступал на вход другого, и так вплоть до блока вывода. Структуру программы затем можно представить в виде блок-схемы (MUSIC V):</p>
+
+<p><img class="left thumb" src="/images/block-diagram-music-v.jpg"></p>
+
+<p>Примеры программ на языке MUSIC V<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">10</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P5</span> <span class="nv">P6</span> <span class="nv">B2</span> <span class="nv">F1</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="nv">AD2</span> <span class="nv">P7</span> <span class="nv">V1</span> <span class="nv">B3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OUT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">0</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">P5</span> <span class="nv">P7</span> <span class="nv">B2</span> <span class="nv">F3</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">P6</span> <span class="nv">P7</span> <span class="nv">B3</span> <span class="nv">F4</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">AD2</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">B2</span> <span class="nv">P8</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">V1</span><span class="p">;</span>
+</span><span class='line'><span class="mi">0</span><span class="nv">UT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">3</span> <span class="mf">.999</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">4</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.999</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.99</span> <span class="mi">50</span> <span class="mf">.99</span> <span class="mi">205</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">306</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">461</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">N0T</span> <span class="mi">0</span> <span class="mi">3</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">2000</span> <span class="mf">.0128</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nv">N0T</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">1</span> <span class="mi">2000</span> <span class="mi">0</span> <span class="mf">.0256</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nv">TER</span> <span class="mi">3</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Напрашивается аналогия с модульными синтезаторами, где используется тот же прием. Более того, может показаться, что это принцип и был изначально позаимствован у первых модульных синтезаторов. Интересно то, что выпуск первых коммерческих модульных синтезаторов пришелся на тот же период, что и выход MUSIC III &ndash; это первая половина 60-ых годов. Еще один пионер компьютерной музыки, Жан Клод Риссе, который в те годы работал в Bell Labs совместно с Максом Метьюсом, утверждал что Роберт Муг (создатель одного из первых коммерческих модульных синтезаторов) был осведомлен о разработках и идеях Макса. Жан Клод и Роберт переписывались какое-то время, обсуждая друг с другом эти идеи<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>.</p>
+
+<p>Впрочем, по словам самого Макса, выход его программы опередил Роберта Муга всего на пару лет, это была своего рода логическая эволюция цифровых и аналоговых синтезаторов, идея, витавшая в воздухе и реализованная инженерами  того времени независимо друг от друга. &ldquo;В любом случае, это было огромное преимущество, потому что музыкант, который имел представление о коммутации модулей синтезаторов Муга, мог понять как соединить юнит генераторы на компьютере&rdquo;, &ndash; заметил Метьюс.</p>
+
+<p>MUSIC V нашел свое развитие в языке Csound, где число юнит-генераторов (опкодов, в терминологии Csound) значительно возросло. Язык Max, который изначально использовался сугубо для управления внешними &ldquo;железными&rdquo; синтезаторами и DSP-процессорами, со временем эволюционировал в полноценную среду для синтеза аудио и обзавелся собственными юнит-генераторами (две наиболее популярных среды использующих язык Max &ndash; Pure Data и Max/MSP). SuperCollider и ChucK используют юнит-генераторы для обозначения и скомпилированных модулей для своих аудиодвижков, и специальных классов для работы с этими модулями.</p>
+
+<p>NI Reaktor и AudioMulch в эту компанию не входят, так как оперируют более высокоуровневыми абстракциями (синтезаторы, семплеры, драм-машины, эффекты) и не предполагают программирования, только коммутацию модулей (впрочем, с пятой версии в Reaktor предусмотрен режим разработки на низком уровне, аналогогичный Max).</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>Примеры программ и диаграмма взяты из книги M.Mathews <em>&ldquo;The Technology of Computer Music&rdquo;</em>, 1969.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>Этот факт был упомянут в примечании к интервью с Максом Мэтьюсом для Computer Music Journal в 2008 году.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+
+
+        <hr class="divider-short"/>
+        
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+<hr class="divider-short"/>
+
+<div class="archive-link">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        
+          <a class="pull-left" href="/about-languages" title="Previous Post: О языках">&laquo; О языках</a>
+        
+
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+    <footer id="footer" class="her-row">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+  <a href="/"><h4>Главная</h4></a>
+</div>
+
+<div class="col-md-2">
+  <div class="social-icon-list">
+    
+
+    
+    <a href="https://github.com/ekozhura"><img src="/images/glyphicons_social_21_github.png"/></a>
+    
+
+    
+
+    
+  </div>
+</div>
+
+<div class="pull-right">
+  <h4>Блог на основе <a href="http://octopress.org/">Octopress</a>. Дизайн темы <a href="http://AdrianArtiles.com">Adrian Artiles</a>.</h4>
+</div>
+
+
+    </div>
+  </div>
+</footer>
+
+  </body>
+</html>
