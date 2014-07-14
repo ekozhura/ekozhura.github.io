@@ -4,7 +4,7 @@
   <title><![CDATA[Machine Musicianship]]></title>
   <link href="http://ekozhura.github.io/atom.xml" rel="self"/>
   <link href="http://ekozhura.github.io/"/>
-  <updated>2014-07-13T23:55:46+03:00</updated>
+  <updated>2014-07-14T09:58:34+03:00</updated>
   <id>http://ekozhura.github.io/</id>
   <author>
     <name><![CDATA[Evgeny Kozhura]]></name>
@@ -18,7 +18,7 @@
     <link href="http://ekozhura.github.io/tidal"/>
     <updated>2014-07-13T23:29:35+03:00</updated>
     <id>http://ekozhura.github.io/tidal</id>
-    <content type="html"><![CDATA[<p>Tidal &ndash; это микроязык для создания паттернов. Никаких юнит-генераторов, синтеза и dsp в Tidal нет, в качестве аудиодвижка используется внешняя библиотека Dirt. Dirt &ndash; это даже не синтезатор, а просто сэмплер. В комплекте с Dirt&#8217;ом идет набор перкуссионных сэмплов, при желании можно добавить своих семплов и использовать их с Tidal. На первый взгляд все очень просто и скромно, но тем не менее, открывает широкие возможности для экспериментов.</p>
+    <content type="html"><![CDATA[<p>Tidal &ndash; это микроязык для создания паттернов. Никаких юнит-генераторов, синтеза и dsp в Tidal нет, в качестве аудиодвижка используется внешняя библиотека Dirt. Dirt &ndash; это даже не синтезатор, а просто сэмплер. В комплекте с Dirt&#8217;ом идет набор семплов (в основном, перкуссионных), при желании можно добавить своих и использовать их с Tidal. На первый взгляд все очень просто и скромно, но тем не менее, открывает широкие возможности для экспериментов.</p>
 
 <iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F153640684&amp;"></iframe>
 
@@ -26,16 +26,16 @@
 <!--more-->
 
 
-<p>Tidal является &ldquo;встраиваемым&rdquo; языком, он не только написан на Haskell, но и выполняется в его окружении. При этом знание Haskell не обязательно, хотя Алекс Маклин (автор проекта) и рекомендует (ну мало ли, что он рекомендует). Использование интерпретатора позволяет создавать и модифицировать паттерны на лету. Таким обращом, Tidal изначально разрабатывался как язык для лайвкодинга.</p>
-
-<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F114878404&amp;"></iframe>
-
-
-
+<p>Tidal является &ldquo;встраиваемым&rdquo; языком, он не только написан на Haskell, но и выполняется в его окружении. При этом знание Haskell не обязательно, хотя автор проекта, Алекс Маклин, и рекомендует (ну мало ли, что он рекомендует). Использование интерпретатора позволяет создавать и модифицировать паттерны на лету. Таким образом, Tidal изначально разрабатывался как язык для лайв кодинга.</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="nf">d1</span> <span class="o">$</span> <span class="p">(</span><span class="n">spread&#39;</span> <span class="p">(</span><span class="n">striate&#39;</span> <span class="mi">4</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="mf">0.2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">$</span> <span class="o">&gt;</span> <span class="n">slow</span> <span class="mi">8</span> <span class="n">sine1</span><span class="p">))</span> <span class="o">$</span> <span class="n">jux</span> <span class="n">rev</span> <span class="o">$</span> <span class="n">sound</span> <span class="p">(</span><span class="n">samples</span> <span class="s">&quot;[latibro*6,bd]/2&quot;</span> <span class="s">&quot;0 7 4&quot;</span><span class="p">)</span> <span class="o">|+|</span> <span class="n">speed</span> <span class="s">&quot;[1 2 1.5]/4&quot;</span>
 </span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F114878404&amp;"></iframe>
 
 
 <p>Код может быть как тривиальным:</p>
@@ -67,13 +67,13 @@
 <iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F149775631&amp;"></iframe>
 
 
-<p>В Tidal реализовано некоторое количество функций для генерации и преобразования паттернов, и также поощряется расширение пользовательскими функциями. Событийная модель отличается от SuperCollider и Common Music тем, что паттерны не являются последовательностью (или потоком) событий, а скорее функцией значения времени от события, что по мнению автора дает некоторые преимущества для лайв кодинга. Автор упоминал расширения, которые включают интеграцию с OSC протоколом.</p>
+<p>В Tidal реализовано некоторое количество функций для генерации и преобразования паттернов, и также поощряется расширение пользовательскими функциями. Событийная модель отличается от SuperCollider и Common Music тем, что паттерны не являются последовательностью (или потоком) событий, а скорее функцией значения времени от события, что по мнению автора дает некоторые преимущества для лайв кодинга. Автор также упоминал расширения, которые включают интеграцию с OSC протоколом.</p>
 
 <iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F129063081&amp;"></iframe>
 
 
 <p>Порог входа в Tidal достаточно низкий &ndash; синтаксис простой и лаконичный, функций не так много.
-Правда перед работой необходимо пройти нетриввиальный квест по установке (установи это, запусти то), и столкнутся с некоторыми ограничениями (только emacs, только хардкор). Помимо Dirt, для запуска Tidal требуется Jack. Я говорил, что в качестве редактора мы ограничены emacs?</p>
+Правда перед работой необходимо пройти нетривиальный квест по установке (установи это, запусти то), и столкнутся с некоторыми ограничениями (только emacs, только хардкор). Помимо Dirt, для запуска Tidal требуется Jack. Я говорил, что в качестве редактора мы ограничены emacs?</p>
 
 <iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F127869914&amp;"></iframe>
 
