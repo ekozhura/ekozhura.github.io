@@ -4,7 +4,7 @@
   <title><![CDATA[Machine Musicianship]]></title>
   <link href="http://ekozhura.github.io/atom.xml" rel="self"/>
   <link href="http://ekozhura.github.io/"/>
-  <updated>2014-07-23T00:15:08+03:00</updated>
+  <updated>2014-07-23T00:16:30+03:00</updated>
   <id>http://ekozhura.github.io/</id>
   <author>
     <name><![CDATA[Evgeny Kozhura]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Композиция в SuperCollider. Часть 2. Введение в паттерны]]></title>
     <link href="http://ekozhura.github.io/supercollider-score-language-part-2"/>
-    <updated>2014-07-15T12:23:03+03:00</updated>
+    <updated>2014-07-22T23:23:03+03:00</updated>
     <id>http://ekozhura.github.io/supercollider-score-language-part-2</id>
     <content type="html"><![CDATA[<p>В прошлой статье я рассмотрел потоки в SuperCollider и базовые возможности по их генерации. Между тем, в SuperCollider существуют более продвинутые способы определения потоков. Речь о паттернах и об их преимуществах.</p>
 
