@@ -4,7 +4,7 @@
   <title><![CDATA[Machine Musicianship]]></title>
   <link href="http://ekozhura.github.io/atom.xml" rel="self"/>
   <link href="http://ekozhura.github.io/"/>
-  <updated>2014-07-23T00:16:30+03:00</updated>
+  <updated>2014-09-15T23:13:13+03:00</updated>
   <id>http://ekozhura.github.io/</id>
   <author>
     <name><![CDATA[Evgeny Kozhura]]></name>
@@ -12,6 +12,120 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Обзор Overtone]]></title>
+    <link href="http://ekozhura.github.io/overtone"/>
+    <updated>2014-09-14T20:39:51+03:00</updated>
+    <id>http://ekozhura.github.io/overtone</id>
+    <content type="html"><![CDATA[<p>Диалекты Lisp достаточно популярны в качестве языков для синтеза и алгоритмической композиции (особенно, для алгоритмической композиции). На их основе за последние десятилетия было созданно внушительное количество DSL (предметно-специфических языков) &ndash; Nyquist, PatchWork (и его современная ипостась PWGL), OpenMusic, Common Music, Impromptu и прочие. Эти DSL относятся к разряду внутренних, &ldquo;встраиваемых&rdquo; языков, которые реализуются поверх базового языка (в данном случае Lisp), используют его синтаксические средства и среду выполнения, и одновременно расширяют его функциональность.</p>
+
+<!--more -->
+
+
+<p>Для этой задачи Lisp отлично подходит, так как обладает широкими возможностями для метапрограммирования. Так, с помощью макросов можно определять новые языковые конструкции, чего не так просто добиться, используя обычные функции. Более того, изначально сферой применения Lisp была разработка искуственного интеллекта, что в общем-то делает его привлекательным для композиторов, практикующих алгоритмическую композицию.</p>
+
+<p>Итак, Overtone &ndash; это тоже DSL, он тоже базируется на диалекте Lisp (Clojure, в данном случае). В отличии от Nyquist или Common Lisp Music (не путать с Common Music), Overtone не обладает собственным аудио движком, а использует SuperCollider, таким образом, по сути являясь фронтедом (клиентом) к scsynth. Так как Overtone встроен в Clojure, то в качестве рантайма используется (естественно) JVM, что открывает огромные возможности для создания мультимедийных приложений. Вы не ограничены только лишь взаимодействием с scsynth, в своем проекте вы можете использовать любые необходимые вам Java-библиотеки, помимо собственно Clojure-библиотек.</p>
+
+<p>Рассматривать Overtone как альтернативу самому языку SuperCollider не стоит. Но вполне как альтернативу другим лисповым клиентам. А среди них, к примеру, <a href="http://rd.slavepianos.org/?t=rsc3">rsc3</a> &ndash; имплементация для Scheme, или клиент, позволяющий использовать Impromptu совместно со scsynth (<a href="http://impromptu.moso.com.au/libs.html">http://impromptu.moso.com.au/libs.html</a>). Или как альтернативу клиентам на JVM-языках, таким как <a href="http://www.sciss.de/scalaCollider/">ScalaCollider</a> и <a href="http://www.sciss.de/jcollider/">JCollider</a>. И, естественно, Overtone будет интересен людям, у которых есть или опыт работы с Clojure или желание пописать на Clojure.</p>
+
+<p>Ovetone примечателен тем, что &ldquo;породил&rdquo; несколько библиотек, причем некоторые из них в принципе можно использовать в проектах, никак не связанных ни с Overtone, ни с аудио синтезом и алгоритмической композицией в целом. В первую очередь, это библиотеки, являющиеся основой событийной модели Overtone: at-at (планировщик задач) и handlers &ndash; набор абстракций для синхронных и асинхронных обработчиков событий. Для мультимедийных проектов можно использовать osc-clj &ndash; это библиотека для работы с протоколом OSC 1.0.</p>
+
+<p>Собственно, основной недостаток Overtone кроется в реализации поверх JVM. JVM имеет ряд негативных ньюансов, когда дело касатся аккуратного и точного тайминга и вообще работы с сигналами (не важно, аудио или управляющий сигнал) в реальном времени. В принципе, в Overtone эти проблемы частично решаемы, вплоть до замещения в JVM дефолтного сборщика мусора альтернативными реализациями.</p>
+
+<p>Итак, что собой представляет работа с Overtone. Все предельно просто. С помощью Lein вы вытягиваете все необходимые проекту зависимости (overtone в данном случае), запускаете REPL и устанавливаете соединение с scsynth. Более подробно процесс установки и первого запуска описан в wiki проекта.</p>
+
+<p>Теперь давайте попробуем написать что-то осмысленное. У нас в арсенале несколько макросов, один из них defsynth &ndash; аналог SynthDef в SuperCollider. Напишем определение синта в REPL:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">defsynth</span> <span class="nv">beep</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">freq</span> <span class="mi">440</span> <span class="nv">amp</span> <span class="mf">0.5</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">out</span> <span class="mi">0</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">* </span><span class="nv">amp</span> <span class="p">(</span><span class="nf">sin-osc</span> <span class="nv">freq</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Макрос defsynth создаст для нас функцию beep, которая принимает в качестве аргументов параметры freq (частота) и amp (амплитуда). Выполним ее:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">beep</span> <span class="mi">880</span> <span class="mf">0.5</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>&ldquo;Потушить&rdquo; звук можно с помощью команды kill:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">kill</span> <span class="nv">beep</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В Overtone внушительный список юнит-генераторов &ndash; он если и не полностью соответствует списку генераторов в SuperCollider, то очень близок к нему. Так что ваши синты, реализованные на SuperCollider можно легко транслировать на Clojure. У меня была, однако, проблема с битовыми юнит-генераторами, я или недоглядел документацию или они действительно не поддерживаются Overtone.</p>
+
+<p>Продолжим. Практически аналогичным макросу desynth является макрос definst:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">definst</span> <span class="nv">beep</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">freq</span> <span class="mi">440</span> <span class="nv">amp</span> <span class="mf">0.5</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">* </span><span class="nv">amp</span> <span class="p">(</span><span class="nf">sin-osc</span> <span class="nv">freq</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Definst определяет инструмент (в отличии от defsynth, который определяет синтезатор в том смысле, как это принятно в терминологии SuperCollider). Инструмент &ndash; это абстракция, так сказать, расширенный вариант synth, который облегчает проектирование и использование синтезаторов в Overtone. У нее есть свои особенности и отличия от synth. Нет необходимости указывать юнит-генератор out в своем инструменте &ndash; в инструменте реализован &ldquo;внутренний&rdquo; микшер, который и контролирует вывод аудиосигналов. Но такая реализация накладывает ограничение на количество выходных каналов &ndash; инструмент может звучать только в моно или в стерео. С помощью шин внутри инструмента, есть возможность управлять параметрами инструмента и цеплять к инструменту эффекты.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="c1">;; начало воспроизведения</span>
+</span><span class='line'><span class="p">(</span><span class="nf">beep</span> <span class="mi">880</span> <span class="mf">0.7</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;; добавим ревербератор в цепочку эффектов</span>
+</span><span class='line'><span class="c1">;; что в принципе бессмысленно в таком простом инструменте</span>
+</span><span class='line'><span class="p">(</span><span class="nf">inst-fx!</span> <span class="nv">beep</span> <span class="nv">fx-reverb</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;; снизим уровень громкости</span>
+</span><span class='line'><span class="p">(</span><span class="nf">inst-volume!</span> <span class="nv">beep</span> <span class="mf">0.3</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;; наконец, остановим воспроизведение:</span>
+</span><span class='line'><span class="p">(</span><span class="nf">kill</span> <span class="nv">beep</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В Overtone есть целый ряд готовых к употреблению инструментов. Это, помимо упомянутых эффектов, несколько сэмплеров и синтезаторов. Для старта, когда нет желания углубляться в саунд дизайн, и для экспериментов с библиотекой &ndash; вполне достаточно. Кстати, одна из забавных фич Overtone &ndash; это его интеграция с Freesound. Overtone позволяет подгружать необходимые семплы из сервиса и использовать в проекте &ndash; по такому принципу реализовано sampled-piano.</p>
+
+<p>Я упоминал библиотеку at-at, которая является частью Overtone, но может быть использована вообще в любом проекте, в котором может потребоваться планировщик задач. Использовать ее безумно просто:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">at</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">2000</span> <span class="p">(</span><span class="nf">now</span><span class="p">))</span> <span class="p">(</span><span class="nf">beep</span> <span class="mi">880</span> <span class="mf">0.8</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В качестве аргументов функция at принимает точное время, когда нужно выполнить функцию, и саму функцию &ndash; в данном случае через 2 секунды после выполнения этого кода наш инструмент начнет воспроизведение.</p>
+
+<p>В Overtone предусмотрено несколько модулей-хелперов для работы с нотами, ритмом, тональностями, интервалами, аккордами и т.д. &ndash; не слишком впечатляющая коллекция, но очевидно облегчает работу во время живых выступлений. Что еще есть в Overtone и как это использовать &ndash; можно понять, изучая код проекта на <a href="https://github.com/overtone/overtone">github</a>. Код отлично документирован и организован. Обсуждения проектов, консультации, общение происходят почтовой рассылке <a href="https://groups.google.com/forum/#!forum/overtone">https://groups.google.com/forum/#!forum/overtone</a></p>
+
+<p>Чего нет в Overtone, так это чего-то отдаленно напоминающего прокси в SuperCollider. Также нет библиотеки паттернов, но с этим проблем быть вообще не должно &ndash; в Clojure собрать свой генератор списков достаточно просто. Нет обширного сообщества, вносящего обширный вклад в развитие проекта. Но так как проект молодой и все еще развивается &ndash; это дело времени.</p>
+
+<hr />
+
+<p>Итак, в качестве эпилога. Overtone &ndash; впечатляющая библиотека, местами урезанная в возможностях по сравнению с библиотекой классов из SuperCollider, зато легко расширяемая благодаря платформе JVM. Это полноценный фронтенд к scsynth, с огромным набором юнит генераторов, с уникальными фичами вроде интеграции с Freesound или представлением синта в виде графа. Так как Overtone все еще активно разрабатывается, проектов на нем не слишком много. Среди них &ndash; <a href="https://github.com/ctford/leipzig">Leipzig</a> (композиторская библиотека), <a href="https://github.com/overtone/mini-beast#mini-beast">MiniBeast</a> (эмулятор аналогового синтезатора).</p>
+
+<p>В следующих постах постараюсь уделить внимание другим лисповым DSL.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Композиция в SuperCollider. Часть 2. Введение в паттерны]]></title>
