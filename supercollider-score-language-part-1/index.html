@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Композиция в SuperCollider. Часть 1. Потоки - Machine Musicianship</title>
+  <meta name="author" content="Evgeny Kozhura">
+
+  
+  <meta name="description" content="Композиция в SuperCollider. Часть 1. Потоки Добавлено 13.07.14 09:04AM Основой алгоритмической композиции, по сути, являются математические методы &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ekozhura.github.io/supercollider-score-language-part-1">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Machine Musicianship" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-52650548-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+  <body>
+    <a href="/" class="home-icon">
+      <img src="/images/home.png"/>
+    </a>
+
+    <article role="article" class="full-single-article">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <h1>Композиция в SuperCollider. Часть 1. Потоки</h1>
+        <div class="meta">
+          Добавлено 
+
+
+
+
+
+
+
+
+  
+
+
+
+<time datetime="2014-07-13T09:04:59+03:00" pubdate data-updated="true">13.07.14 09:04AM</time>
+          
+
+
+        </div>
+        <p>Основой алгоритмической композиции, по сути, являются математические методы генерации партитур. Синтаксические конструкции или библиотеки функций и классов, которые используются в композиции, часто выделяются в так называемый score language, то есть язык, который используется для определения партитур. Score language в SuperCollider базируется на потоках (абстрактный класс Stream), событиях (класс Event) и  паттернах (абстрактный класс Pattern). Сперва рассмотрим потоки.</p>
+
+<!--more-->
+
+
+<p>Термины <strong>итератор</strong>, <strong>генератор</strong> и <strong>поток</strong> в разных языках программирования используются для описания похожих концепций и абстракций, но не всегда аналогичных. В общем случае, итератор &ndash; это объект, который осуществляет последовательный доступ к элементам коллекции. Это несколько отличается от перебора элементов коллекции по их индексам.</p>
+
+<p>Интерфейс итератора предполагает следующее поведение. Во-первых, необходимо инициализировать итератор с каким-то начальным состоянием и сбрасывать состояние итератора на начальное. Начальное состояние чаще всего предполагает, что итератор вернет первый элемент коллекции. Во-вторых, необходимо извлекать следующий элемент коллекции. И наконец, если коллекция имеет конечное число элементов, необходимо каким-то образом узнать, что были перебраны все элементы.</p>
+
+<p>Генератор &ndash; это специальная функция, которая сохраняет внутреннее состояние и способна приостановить свое выполнение. Когда функция будет вызвана в следующий раз, то она продолжит выполнение на том месте, где остановилась, вместо того чтобы отработать заново. Это достигается вызовом специального оператора yield, который возвращает значение (аналогично оператору return) и приостанавливает функцию до ее следующего вызова.</p>
+
+<p>Пример генератора на Python:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">counter</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">yield</span> <span class="n">n</span>
+</span><span class='line'>        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В примере реализован счетчик, который сгенерирует новое значение каждый раз, когда будет вызван. Поскольку в цикле отсутствует условие выхода из цикла, счетчик по сути генерирует бесконечную последовательность целых чисел.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">counter</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+</span><span class='line'><span class="mi">2</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+</span><span class='line'><span class="mi">3</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+</span><span class='line'><span class="mi">4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из примера, поведение генератора аналогично итератору.</p>
+
+<p>Ну и наконец, потоки (данных) &ndash; своего рода &ldquo;ленивые&rdquo; списки (lazy lists). Это означает, что элементы коллекции вычисляются &ldquo;по требованию&rdquo;, всякий раз при попытке доступа к ним. Собственно, потоки &ndash; это абстракция, структура данных с определенными свойствами. Реализуются они с помощью итераторов и генераторов. Так как элементы вычисляются тогда, когда к ним пытаются получить доступ, потоки могут быть бесконечными (как в примере счетчика).</p>
+
+<p>В SuperCollider потоки определяются набором классов, которые наследуются от абстрактного класса <code>Stream</code>. Каждый поток реализует метод <code>next</code>, позволяющий получать последовательный доступ к элементам в потоке. Интересно то, что для абстрактного класса <code>Object</code> так же определен метод <code>next</code> (который возвращает <code>this</code>), а поскольку в SuperCollider все классы наследуются от <code>Object</code>, то любой объект по сути может быть рассмотрен как поток. Метод <code>reset</code>, если он реализован, сбрасывает состояние потока на начальное или просто возвращает <code>nil</code>.</p>
+
+<p>Наиболее полезными классами-потомками <code>Stream</code> являются <code>FuncStream</code> и <code>Routine</code>. <code>FuncStream</code> позволяет нам использовать функции при вызове методов <code>next</code> и <code>reset</code>.</p>
+
+<p>В следующем примере мы определяем функцию как аргумент конструктора, которая будет выполнятся всякий раз, когда мы вызываем метод <code>next</code>. И всякий раз эта функция будет возвращать число, выбранное из заданного списка случайным образом. Тем самым, с помощью экземпляра класса <code>FuncStream</code>, мы можем определить бесконечный поток, состоящий из случайных чисел.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">FuncStream</span><span class="p">.</span><span class="k">new</span><span class="p">({</span> <span class="err">#</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">].</span><span class="nx">choose</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Функция для метода <code>reset</code> не определена, а потому вызвав <code>reset</code>, мы получим <code>nil</code>.</p>
+
+<p>Класс <code>Routine</code> также позволяет запускать функцию для определения значений в потоке данных, но особенность <code>Routine</code> в том, что объекты этого класса являются генераторами. То есть, с помощью <code>yield</code> мы сохраняем текущее состояние и приостанавливаем выполнение функции до следующего вызова метода <code>next</code>. Исчерпав все вызовы <code>yield</code>, в конечном итоге функция вернет <code>nil</code>. Простейшие примеры:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span> <span class="mi">1</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="mi">2</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>  <span class="c1">// 1</span>
+</span><span class='line'><span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>  <span class="c1">// 2</span>
+</span><span class='line'><span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>  <span class="c1">// nil</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">3</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="mi">4</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span> <span class="c1">// выведет последовательно 0, 1, 2, nil</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>К потоку можно применять математические операции, его можно отфильтровать или применять функции к каждому элементу.</p>
+
+<p>Метод <code>collect</code> &ndash; аналогичен функции map в функциональных языках программирования, а именно над каждым элементом выполняется какое-то действие, в результате мы получаем новый, уже трансформированный поток. В данном примере, к числам от 0 до 9 будет прибавлено 100:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">collect</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">item</span><span class="p">;</span> <span class="nx">item</span> <span class="o">+</span> <span class="mi">100</span> <span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">b</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Методы <code>select</code> и <code>reject</code> позволяют создать новый поток из элементов текущего, если эти элементы удовлетворяют условию (в случае <code>select</code>) или не удовлетворяют условию (в случае <code>reject</code>). Например, необходимо отобрать все нечетные числа из последовательности:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="c1">// функция, определенная в select будет возвращать true для всех нечетных чисел</span>
+</span><span class='line'><span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">select</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">item</span><span class="p">;</span> <span class="nx">item</span><span class="p">.</span><span class="nx">odd</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">b</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Аналогичную функцию, но с использованием <code>reject</code> можно переписать таким образом:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="c1">// функция, определенная в reject будет возвращать false для всех четных чисел</span>
+</span><span class='line'><span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">reject</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">item</span><span class="p">;</span> <span class="nx">item</span><span class="p">.</span><span class="nx">even</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">b</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<hr />
+
+<p>Вот, собственно, и вся базовая информация об итераторах, потоках и их реализации в SuperCollider. В следующих постах я рассмотрю события и паттерны в SuperCollider. В общем, продолжение следует.</p>
+
+
+        <hr class="divider-short"/>
+
+        
+          <a class="pull-left" href="/unit-generators-part-1" title="Previous Post: Юнит-генераторы">&laquo; Юнит-генераторы</a>
+        
+
+        
+          <a class="pull-right" href="/tidal" title="Next Post: Обзор Tidal">Обзор Tidal &raquo;</a>
+        
+
+        <div style="clear: both;"></div>
+
+        <hr class="divider-short"/>
+
+        
+        <section>
+          <h1>Комментарии</h1>
+          <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+        </section>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+<hr class="divider-short"/>
+
+<div class="archive-link">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+
+      </div>
+    </div>
+  </div>
+</div>
+    <footer id="footer" class="her-row">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+  <a href="/"><h4>Главная</h4></a>
+</div>
+
+<div class="col-md-2">
+  <div class="social-icon-list">
+    
+
+    
+    <a href="https://github.com/ekozhura"><img src="/images/glyphicons_social_21_github.png"/></a>
+    
+
+    
+
+    
+  </div>
+</div>
+
+<div class="pull-right">
+  <h4>Блог на основе <a href="http://octopress.org/">Octopress</a>. Дизайн темы <a href="http://AdrianArtiles.com">Adrian Artiles</a>.</h4>
+</div>
+
+
+    </div>
+  </div>
+</footer>
+
+    
+
+<script type="text/javascript">
+      var disqus_shortname = 'machinemusicianship';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ekozhura.github.io/supercollider-score-language-part-1';
+        var disqus_url = 'http://ekozhura.github.io/supercollider-score-language-part-1';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+  </body>
+</html>

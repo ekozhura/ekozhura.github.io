@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Machine Musicianship]]></title>
+  <link href="http://ekozhura.github.io/atom.xml" rel="self"/>
+  <link href="http://ekozhura.github.io/"/>
+  <updated>2015-03-27T03:28:41+02:00</updated>
+  <id>http://ekozhura.github.io/</id>
+  <author>
+    <name><![CDATA[Evgeny Kozhura]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Композиция в SuperCollider. Часть 3. Время и планировщики задач]]></title>
+    <link href="http://ekozhura.github.io/supercollider-score-language-part-3"/>
+    <updated>2015-03-27T02:34:44+02:00</updated>
+    <id>http://ekozhura.github.io/supercollider-score-language-part-3</id>
+    <content type="html"><![CDATA[<p>Эта статья &ndash; небольшое отступление от темы Score Language в SuperCollider. Но безусловно необходимое для дальнейшего продвижения по теме событий и паттернов. Речь пойдет о планировщиках задач и о работе со временем в SuperCollider.</p>
+
+<!-- more -->
+
+
+<p>В предыдущих статьях я рассмотрел потоки данных и способы их генерации с помощью <code>Routine</code>, <code>FuncStream</code>, и паттернов. Особенно интересен класс <code>Routine</code>, который с помощью <code>yield</code> может приостанавливать свое выполнение, возвращать значение и при повторном вызове продолжать выполнение с места остановки.</p>
+
+<p>У <code>Routine</code> есть еще одна интересная особенность &ndash; мы можем явно указать задержку по времени, после которой процедура восстановит выполнение. Для этого, вместо <code>next</code>, мы посылаем объекту <code>Routine</code> сообщение <code>play</code>. Время задержки будет определяться числовым значением, которое вернет <code>yield</code>. В этом примере итерация цикла выполняется через каждые полсекунды:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">c</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">100</span><span class="p">.</span><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>        <span class="o">|</span><span class="nx">i</span><span class="o">|</span>
+</span><span class='line'>        <span class="p">(</span><span class="s2">&quot;Current value : &quot;</span> <span class="o">+</span> <span class="nx">i</span><span class="p">).</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">c</span><span class="p">.</span><span class="nx">play</span><span class="p">;</span> <span class="c1">// старт</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">c</span><span class="p">.</span><span class="nx">stop</span><span class="p">;</span> <span class="c1">// в любой момент можно остановить проигрывание.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В данном случае <code>Routine</code> выполняет совершенно другую задачу, не связанную с генерацией значений. Возможно, чтобы подчеркнуть, что значение, которое возвращает <code>yield</code> &ndash; это именно время задержки, для классов <code>Float</code> и <code>Integer</code> определен специальный метод <code>wait</code>, который по сути является псевдонимом <code>yield</code> <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>. Тот же пример, но с методом <code>wait</code>, нагляднее демонстрирует поведение функции в <code>Routine</code>. Теперь код выглядит так, как будто на каждой итерации мы не значение возвращаем, а делаем паузу на полсекунды.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">c</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">100</span><span class="p">.</span><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>        <span class="o">|</span><span class="nx">i</span><span class="o">|</span>
+</span><span class='line'>        <span class="p">(</span><span class="s2">&quot;Current value : &quot;</span> <span class="o">+</span> <span class="nx">i</span><span class="p">).</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Таким образом, с помощью <code>Routine</code> можно написать простой планировщик задач <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>. Определим функцию, которая принимает в качестве аргументов время задержки (параметр <code>delta</code>) и функцию, которую необходимо выполнять всякий раз по прошествию заданного времени <code>delta</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">w</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">arg</span> <span class="nx">delta</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="nx">func</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">sched</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">inf</span><span class="p">.</span><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">();</span>
+</span><span class='line'>            <span class="nx">delta</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>    <span class="nx">sched</span><span class="p">.</span><span class="nx">play</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'><span class="c1">// функция w вернет ссылку на объект sched</span>
+</span><span class='line'><span class="nx">z</span> <span class="o">=</span> <span class="nx">w</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;event occured&quot;</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">z</span><span class="p">.</span><span class="nx">stop</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Именно так работает метод <code>sched</code> в семействе классов <code>Clock</code>, и используется он как раз для этих целей &ndash; выполнение задач в какой-то момент в будущем <sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>. И именно его использует <code>Routine</code> в ответ на сообщение <code>play</code>, поэтому предыдущий пример можно переписать так:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// остановить выполнение можно с помощью cmd + .</span>
+</span><span class='line'><span class="nx">SystemClock</span><span class="p">.</span><span class="nx">sched</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;event occured!&quot;</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="mi">2</span><span class="p">;</span> <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из примера, если функция возвращает числовое значение, <code>SystemClock.sched</code> будет повторять выполнение этой функции снова и снова, а временем задержки будет возвращаемое функцией числовое значение. В данном случае, время задержки 2 секунды.</p>
+
+<p>Абстрактный класс <code>Clock</code> и его потомки &ndash; <code>SystemClock</code>, <code>AppClock</code> и <code>TempoClock</code> предназначены для отсчета времени, как на то намекают их названия. У каждого конкретного класса свое назначение. <code>SystemClock</code> и <code>AppClock</code> всегда отсчитывают время в секундах и не могут быть инстанциированы. У <code>AppClock</code> более низкий системный приоритет, поэтому он используется там, где точность времени не критична &ndash; например для работы с GUI. <code>TempoClock</code> предоставляет такой же точный тайминг, как и <code>SystemClock</code>, но возвращает не секунды, а количество ударов в секунду (beats per second). Плюс, в отличии от других классов, можно инстанциировать сколько угодно экземляров <code>TempoClock</code>, при этом при старте SuperCollider по умолчанию создается один экземпляр и он становится доступен по <code>TempoClock.default</code>.</p>
+
+<p>Идея в том, что каждый отсчет времени в <code>SystemClock</code> и <code>AppClock</code> &ndash; это постоянная величина, ведь секунда есть секунда. Поэтому особого смысла инстанциировать несколько экземпляров каждого из этих классов нет. А с <code>TempoClock</code> все иначе, beats per second &ndash; величина относительная, и если меняется темп, то меняется и интервал между двумя отсчетами. Разные счетчики позволяют выполнять запланированные функции с разной частотой:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">c</span> <span class="o">=</span> <span class="nx">TempoClock</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="nx">d</span> <span class="o">=</span> <span class="nx">TempoClock</span><span class="p">(</span><span class="mf">0.5</span><span class="p">);</span> <span class="c1">// темп в два раза медленнее</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">c</span><span class="p">.</span><span class="nx">sched</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span> <span class="o">|</span><span class="nx">b</span><span class="o">|</span> <span class="p">[</span><span class="s2">&quot;Beats from c:&quot;</span><span class="p">,</span> <span class="nx">b</span><span class="p">].</span><span class="nx">postln</span><span class="p">;</span> <span class="mi">1</span> <span class="p">});</span>
+</span><span class='line'><span class="nx">d</span><span class="p">.</span><span class="nx">sched</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span> <span class="o">|</span><span class="nx">b</span><span class="o">|</span> <span class="p">[</span><span class="s2">&quot;Beats from d:&quot;</span><span class="p">,</span> <span class="nx">b</span><span class="p">].</span><span class="nx">postln</span><span class="p">;</span> <span class="mi">1</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, вернемся к <code>Routine</code> и рассмотрим, как работает метод <code>play</code>. Метод <code>play</code> определен для базового класса <code>Stream</code> и доступен для всех его потомков, не только для <code>Routine</code>. Его поведение следующее &ndash; если при вызове метода в качестве аргумента был передан экземпляр класса <code>Clock</code> (или его подклассов), то этому объекту посылается сообщение <code>play</code>. В противном случае, это сообщение посылается дефолтному счетчику, который возвращает <code>TempoClock.default</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="cm">/* метод play класса Stream */</span>
+</span><span class='line'><span class="cm">/* File: supercollider/SCClassLibrary/Common/Streams/Stream.sc */</span>
+</span><span class='line'><span class="nx">play</span> <span class="p">{</span> <span class="nx">arg</span> <span class="nx">clock</span><span class="p">,</span> <span class="nx">quant</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">clock</span> <span class="o">=</span> <span class="nx">clock</span> <span class="o">?</span> <span class="nx">TempoClock</span><span class="p">.</span><span class="k">default</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">clock</span><span class="p">.</span><span class="nx">play</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">quant</span><span class="p">.</span><span class="nx">asQuant</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Сам же метод <code>play</code> в классе <code>Clock</code> &ndash; это обертка метода <code>sched</code>, поэтому код <code>SystemClock.play({ "event occured!".postln; 2; })</code> будет аналогичен <code>SystemClock.sched(0, { "event occured!".postln; 2; });</code></p>
+
+<p>Остановить задачу можно с помощью метода <code>stop</code>. Этот метод останавливает выполнение функции внутри <code>Routine</code>, как если бы она достигла конца. После этого любая попытка возобновить выполнение (к примеру с помощью методов <code>next</code> или <code>value</code>) ни к чему не приведет. Можно лишь заново начать выполнение <code>Routine</code> с помощью метода <code>reset</code>.</p>
+
+<p>Вот такое поведение не всегда желательно. Если необходимо поставить на паузу задачу, то <code>Routine</code> для этих целей не подойдет &ndash; <code>yield</code> (или <code>wait</code>) внутри <code>Routine</code> всегда будет возвращать одно и то же значение в качестве времени задержки. Не говоря о том, что сама по себе пауза означает задержку, не определенную по времени &ndash; 5 секунд, 10 минут, 2 часа.</p>
+
+<p>Тут на помощь приходит <code>PauseStream</code> и его два важных подкласса <code>EventStreamPlayer</code> и <code>Task</code>. <code>EventStreamPlayer</code> имеет смысл рассмотреть в отдельной статье вместе с событиями и с потоками событий. Что касается <code>Task</code>, то он во многом повторяет поведение <code>Routine</code> (по существу, это обертка вокруг <code>Routine</code>, поэтому методы <code>yield</code> и <code>wait</code> будут работать внутри <code>Task</code>), в то же время наследует у <code>PauseStream</code> способность ставать на паузу и восстанавливать выполнение.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">d</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">50</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="nx">i</span><span class="p">.</span><span class="nx">squared</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Функция, определенная в <code>Routine</code>, может передана в <code>Task</code> без изменений. Но поведение методов <code>play</code>, и <code>stop</code> отличается от соответствующих методов в <code>Routine</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">t</span> <span class="o">=</span> <span class="nx">Task</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">50</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="nx">i</span><span class="p">.</span><span class="nx">squared</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'><span class="c1">// весь набор для управления выполнением задачи</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">play</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">pause</span>     <span class="c1">// аналогичен stop</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">resume</span>    <span class="c1">// аналогичен play</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">stop</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">reset</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Task</code> не является стопроцентной заменой <code>Routine</code>, в нем иногда обнаруживается довольно странное поведение, о чем предупреждает хелп файл по классу. К тому же, <code>Routine</code> наследует свое поведение не только от <code>Stream</code>, но и от <code>Thread</code>. А <code>Task</code> по-прежнему остается подклассом <code>Stream</code>, интерфейс которого расширяется с помощью <code>PauseStream</code> <sup id="fnref:4"><a href="#fn:4" rel="footnote">4</a></sup>.</p>
+
+<hr />
+
+<p>В следующей статье я обязательно рассмотрю такое важное понятие в SuperCollider как Событие (<code>Event</code>). <code>Event</code> в SuperCollider обозначает именно музыкальное событие (например, проигрывание ноты), поэтому имеет к композиции самое непосредственное отношение. Но в тоже время объекты этого класса применяются и для (неожиданно) прототипирования классов в SuperCollider. А поскольку я параллельно пишу статьи по ООП в SuperCollider, то буквально разрываюсь, с какой стороны подойти к теме ивентов. Но как бы там ни было, следующая статья по SuperCollider должна быть посвящена классу <code>Event</code>.</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>Строго говоря, метод <code>wait</code> просто вызывает <code>yield</code>, соотвественно все правила для <code>yield</code> будут справедливы и для <code>wait</code>. Например, вызвав <code>wait</code> в какой-нибудь функции вне <code>Routine</code> мы получим стандартное исключение <em>&ldquo;yield was called outside of a Routine&rdquo;</em>.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>В зависимости от контекста, <em>Планировщик</em> может соответствовать одному из двух шаблонов &ndash; Scheduler или Scheduled Task. Между ними есть разница, несмотря на созвучные названия. В статье речь идет именно о Scheduled Task. Подробнее о шаблоне: http://c2.com/cgi/wiki?ScheduledTask.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>Аналогичное поведение функции <code>at</code> в Overtone.<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+<li id="fn:4">
+<p>Вообще, если придираться к словам, то оба родительских класса <code>PauseStream</code> и <code>Thread</code> классов <code>Task</code> и <code>Routine</code>, наследуются от общего предка <code>Stream</code>. И каждый по своему расширяет интерфейс <code>Stream</code> уникальным поведением. Но если <code>PauseStream</code> &ndash; это все еще <code>Stream</code>, то семантика <code>Thread</code> никакого отношения к потокам не имеет и наследуется от <code>Stream</code> чисто формально, чтобы передать некоторые его свойства классу <code>Routine</code>. Все-таки, множественного наследования в SuperCollider нет, а композицией делу поможешь.<a href="#fnref:4" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ООП в SuperCollider. Часть первая. Сообщения]]></title>
+    <link href="http://ekozhura.github.io/supercollider-oop-part-1"/>
+    <updated>2014-10-24T08:49:44+03:00</updated>
+    <id>http://ekozhura.github.io/supercollider-oop-part-1</id>
+    <content type="html"><![CDATA[<p>Прежде чем продолжить цикл о библиотеке паттернов, решил вернуться немного назад и детально разобрать, как писать объектно-ориентированный код в SuperCollider. И первое, что нужно знать &ndash; это то, что реализация ООП в SuperCollider аналогична Smalltalk (а это значит, что если документации по SuperCollider недостаточно для понимания ООП, пригодятся и учебные пособия по Smalltalk).</p>
+
+<!--more-->
+
+
+<p>Итак, все сущности в программе являются объектами &ndash; числа, строки, коллекции, функции и т.д. Объекты создаются с помощью классов. Класс определяет поведение объектов и их состояния (с помощью методов и свойств, соответственно). Для понимания классов, часто проводят аналогию с чертежами (blueprints), по которым и создаются экземпляры-объекты. Классы упорядочены иерархически &ndash; они наследуют поведение от родительского класса и могут передавать свое поведение дочерним классам (подклассам).</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Dictionary</span><span class="p">.</span><span class="k">new</span><span class="p">;</span> <span class="c1">// создаем объект класса Dictionary</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Объекты взаимодействуют друг с другом посредством сообщений (message). Возможность принимать то или иное сообщение определяется наличием необходимого метода. Например, объект класса Number принимает сообщение <code>*</code>, если реализует метод с таким же именем. При этом, за поведение метода <code>*</code> целиком отвечает объект-получатель (receiver), сообщение только определяет желаемую операцию (умножение в данном случае). В этом ключевая особенность. Объекты разных классов могут по-разному реагировать на одно и то же сообщение <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>.</p>
+
+<p>Итак, в SuperCollider есть несколько способов вызова методов объекта. Первый способ &ndash; собственно передача сообщения объекту-получателю (message passing). Синтаксис следующий &ndash; объект-получатель и сообщение разделены точкой, затем в скобках указан список аргументов.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">4</span><span class="p">.</span><span class="nx">dup</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span> <span class="c1">// вернет [4, 4, 4]</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span> <span class="c1">// вернет 6</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">6</span><span class="p">).</span><span class="nx">dup</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span> <span class="c1">// цепочка сообщений, вернет [6, 6, 6, 6, 6]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Второй способ &ndash; в виде бинарной операции. Такая запись является единственной возможной для методов, имена которых выраженны спец символами вроде <code>+</code>, <code>-</code>, <code>&amp;</code>, <code>&gt;</code> (логические и математические выражения). Так, например умножение мы запишем как <code>4 * 5</code> и не иначе (при попытке выполнить <code>4.*(5)</code> мы получим ошибку). Но и другие методы, которые принимают 1 аргумент, можно выразить в виде бинарных операций, добавив к имени двоеточие:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">4</span> <span class="nx">dup</span><span class="o">:</span> <span class="mi">3</span><span class="p">;</span> <span class="c1">// вернет [4, 4, 4]</span>
+</span><span class='line'><span class="mi">5</span> <span class="nx">max</span><span class="o">:</span> <span class="mi">6</span><span class="p">;</span> <span class="c1">// вернет 6</span>
+</span><span class='line'><span class="mi">5</span> <span class="k">do</span><span class="o">:</span> <span class="p">{</span><span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="nx">post</span><span class="p">;}</span> <span class="c1">// выведет на экран 01234 и вернет 5</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">5</span> <span class="nx">max</span><span class="o">:</span> <span class="mi">6</span> <span class="nx">dup</span><span class="o">:</span> <span class="mi">5</span><span class="p">;</span> <span class="c1">// цепочка сообщений, вернет [6, 6, 6, 6, 6]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>И наконец, существует так называемая функциональная нотация, потому что синтаксически она похожа на запись вызова функции в большинстве языков программирования. Сперва записывается имя сообщения, потом в скобках &ndash; список объектов. При этом, первым элементом является объект-получатель, а остальные элементы передаются в метод получателя как аргументы.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">dup</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// вернет [4, 4, 4]</span>
+</span><span class='line'><span class="nx">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span> <span class="c1">// вернет 6</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">dup</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="mi">5</span><span class="p">);</span> <span class="c1">// цепочка сообщений в виде вложенности вызовов функций</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Последний способ является синтаксическим сахаром, который позволяет писать программы в функциональном стиле. Несмотря на то, что 5 и 6 являются объектами, которые взаимодействуют друг с другом с помощью сообщения max, код выглядит так, будто бы мы применили функцию max к двум целочисленным значениям 5 и 6.</p>
+
+<p>Рассмотрим некоторые свойства сообщений. Язык можно расширять, дополнять новыми конструкциями с помощью механизма сообщений. Например, привычные управляющие конструкции <strong>if-else</strong>, <strong>while</strong>, <strong>case</strong> в SuperCollider (а ранее, в Smalltalk) реализованы с помощью методов. На примере условной конструкции: получателем сообщения <code>if</code> является объект типа Boolean, который мы получаем в результате выполнения какого-нибудь логического выражения. Сообщение <code>if</code> также передает в метод две функции &ndash; первая будет выполнена в случае если выражение вернет <code>true</code>, вторая &ndash; в противоположном случае, при значении <code>false</code>. Таким образом, поведение метода <code>if</code> целиком соответствует поведению аналогичной конструкции из других императивных языков программирования.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">[</span><span class="kc">true</span><span class="p">,</span> <span class="kc">false</span><span class="p">].</span><span class="nx">choose</span><span class="p">.</span><span class="k">if</span><span class="p">({</span><span class="s2">&quot;Истина&quot;</span><span class="p">;},</span> <span class="p">{</span><span class="s2">&quot;Ложь&quot;</span><span class="p">;});</span>
+</span><span class='line'><span class="cm">/* в фунциональной нотации */</span>
+</span><span class='line'><span class="k">if</span> <span class="p">([</span><span class="kc">true</span><span class="p">,</span> <span class="kc">false</span><span class="p">].</span><span class="nx">choose</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;Истина&quot;</span><span class="p">;},</span> <span class="p">{</span><span class="s2">&quot;Ложь&quot;</span><span class="p">;});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В примерах мы уже видели как сообщения могут образовать цепочку (message chaining). Это становится возможным благодаря свойству методов &ndash; любой метод гарантировано возвращает какой-то объект. Если в методе не определено какое именно значение должно быть возвращено, по умолчанию метод возвращает ссылку на объект-получатель. Итак, объект-получатель, обработав сообщение, возвращает объект, которому так же можно послать сообщение и так до самого конца цепочки.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">10</span><span class="p">.</span><span class="nx">rand</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">dup</span><span class="p">.</span><span class="nx">dup</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">flat</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Математические выражения в SuperCollider записываются с помощью бинарных операций, но привычные правила приоритета операций здесь не сработают. В SuperCollider приоритеты всех бинарных операций равны и для вычислений справедливо правило левой ассоциативности &ndash; вычисления выполняются слева направо. Так <code>3 + 4 * 5</code> вернет 35, а не 23.</p>
+
+<p>В то же время, приоритетность у бинарных операций ниже, чем у сообщений:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="cm">/* метод max будет вызван раньше операции сложения, и выражение вернет 11 */</span>
+</span><span class='line'><span class="mi">5</span> <span class="o">+</span> <span class="mi">5</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/* max записан как бинарная операция, и по правилу левой ассоциативности выполнится после сложения. выражение вернет 10 */</span>
+</span><span class='line'><span class="mi">5</span> <span class="o">+</span> <span class="mi">5</span> <span class="nx">max</span><span class="o">:</span> <span class="mi">6</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Порядок выполнения можно легко переопределить с помощью скобок (они повышают приоритет операции).</p>
+
+<p>Сообщения могут передаваться объекту в качестве аргументов. Рассмотрим пример:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">4</span><span class="p">.</span><span class="nx">perform</span><span class="p">([</span><span class="err">\</span><span class="nx">max</span><span class="p">,</span> <span class="err">\</span><span class="nx">min</span><span class="p">].</span><span class="nx">choose</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+</span><span class='line'><span class="mi">4</span><span class="p">.</span><span class="nx">tryPerform</span><span class="p">(</span><span class="err">\</span><span class="nx">doIt</span><span class="p">,</span> <span class="p">{</span><span class="o">|</span> <span class="nx">a</span> <span class="o">|</span> <span class="nx">a</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>perform</code> принимает в качестве первого аргумента сообщение, которое нужно передать объекту-получателю. Если объект не &ldquo;понимает&rdquo; сообщение, то есть у него нет соответствующего метода, генерируется исключение doesNotUnderstandError. <code>tryPerform</code> действует аналогично <code>perform</code>, но если объект не обладает соответствующим методом, сообщение ему не посылается и <code>tryPerform</code> возвращает <code>nil</code> <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>.</p>
+
+<p>Отдельно стоит упомянуть о передаче аргументов. Количество аргументов и их порядок определены в объявлении метода (вместе с именем метода они составляют его сигнатуру). Но при вызове метода не обязательно следовать сигнатуре. Можно передать меньшее количество аргументов (или большее). Для этого в методе нужно указать значения по умолчанию (для тех случаев, когда соответствующий аргумент можно опустить при вызове метода). В противном случае, такой аргумент будет иметь значение <code>nil</code>. Чтобы вызвать метод с произвольным порядком аргументов, в вызове необходимо обратиться к аргументу по его имени.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="o">~</span><span class="nx">func</span> <span class="o">=</span> <span class="p">{</span><span class="o">|</span><span class="nx">first</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">second</span> <span class="o">=</span> <span class="mi">4</span><span class="o">|</span>
+</span><span class='line'>    <span class="nx">first</span> <span class="o">*</span> <span class="nx">second</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="o">~</span><span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>    <span class="c1">// 8</span>
+</span><span class='line'><span class="o">~</span><span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span> <span class="c1">// 20</span>
+</span><span class='line'><span class="o">~</span><span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">second</span><span class="o">:</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// 6</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<hr />
+
+<p>На этот раз все, в следующем посте перейдем к классам в SuperCollider.</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>В статье о потоках мы видели этот подход в действии. Объекты всех классов, начиная с абстрактного Object и включая классы Number, String, семейство паттерн-классов и т.д., реализуют методы <code>next</code>, <code>embedInStream</code>, <code>asStream</code>, но реализация отличается в зависимости от класса. Таким образом, каждый объект может отвечать на сообщение <code>embedInStream</code>.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>Одно замечание по <code>tryPerform</code>. Метод <code>tryPerform</code> не увидит методы, добавленные во время выполнения программы (например, добавленные с помощью <code>addUniqueMethod</code>). Возможно, так происходит потому, что он проверяет среди методов, определенных в классе на этапе компиляции.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Обзор Overtone]]></title>
+    <link href="http://ekozhura.github.io/overtone"/>
+    <updated>2014-09-14T20:39:51+03:00</updated>
+    <id>http://ekozhura.github.io/overtone</id>
+    <content type="html"><![CDATA[<p>Диалекты Lisp достаточно популярны в качестве языков для синтеза и алгоритмической композиции (особенно, для алгоритмической композиции). На их основе за последние десятилетия было созданно внушительное количество DSL (предметно-специфических языков) &ndash; Nyquist, PatchWork (и его современная ипостась PWGL), OpenMusic, Common Music, Impromptu и прочие. Эти DSL относятся к разряду внутренних, &ldquo;встраиваемых&rdquo; языков, которые реализуются поверх базового языка (в данном случае Lisp), используют его синтаксические средства и среду выполнения, и одновременно расширяют его функциональность.</p>
+
+<!--more -->
+
+
+<p>Для этой задачи Lisp отлично подходит, так как обладает широкими возможностями для метапрограммирования. Так, с помощью макросов можно определять новые языковые конструкции, чего не так просто добиться, используя обычные функции. Более того, изначально сферой применения Lisp была разработка искуственного интеллекта, что в общем-то делает его привлекательным для композиторов, практикующих алгоритмическую композицию.</p>
+
+<p>Итак, Overtone &ndash; это тоже DSL, он тоже базируется на диалекте Lisp (Clojure, в данном случае). В отличии от Nyquist или Common Lisp Music (не путать с Common Music), Overtone не обладает собственным аудио движком, а использует SuperCollider, таким образом, по сути являясь фронтедом (клиентом) к scsynth. Так как Overtone встроен в Clojure, то в качестве рантайма используется (естественно) JVM, что открывает огромные возможности для создания мультимедийных приложений. Вы не ограничены только лишь взаимодействием с scsynth, в своем проекте вы можете использовать любые необходимые вам Java-библиотеки, помимо собственно Clojure-библиотек.</p>
+
+<p>Рассматривать Overtone как альтернативу самому языку SuperCollider не стоит. Но вполне как альтернативу другим лисповым клиентам. А среди них, к примеру, <a href="http://rd.slavepianos.org/?t=rsc3">rsc3</a> &ndash; имплементация для Scheme, или клиент, позволяющий использовать Impromptu совместно со scsynth (<a href="http://impromptu.moso.com.au/libs.html">http://impromptu.moso.com.au/libs.html</a>). Или как альтернативу клиентам на JVM-языках, таким как <a href="http://www.sciss.de/scalaCollider/">ScalaCollider</a> и <a href="http://www.sciss.de/jcollider/">JCollider</a>. И, естественно, Overtone будет интересен людям, у которых есть или опыт работы с Clojure или желание пописать на Clojure.</p>
+
+<p>Ovetone примечателен тем, что &ldquo;породил&rdquo; несколько библиотек, причем некоторые из них в принципе можно использовать в проектах, никак не связанных ни с Overtone, ни с аудио синтезом и алгоритмической композицией в целом. В первую очередь, это библиотеки, являющиеся основой событийной модели Overtone: at-at (планировщик задач) и handlers &ndash; набор абстракций для синхронных и асинхронных обработчиков событий. Для мультимедийных проектов можно использовать osc-clj &ndash; это библиотека для работы с протоколом OSC 1.0.</p>
+
+<p>Собственно, основной недостаток Overtone кроется в реализации поверх JVM. JVM имеет ряд негативных ньюансов, когда дело касатся аккуратного и точного тайминга и вообще работы с сигналами (не важно, аудио или управляющий сигнал) в реальном времени. В принципе, в Overtone эти проблемы частично решаемы, вплоть до замещения в JVM дефолтного сборщика мусора альтернативными реализациями.</p>
+
+<p>Итак, что собой представляет работа с Overtone. Все предельно просто. С помощью Lein вы вытягиваете все необходимые проекту зависимости (overtone в данном случае), запускаете REPL и устанавливаете соединение с scsynth. Более подробно процесс установки и первого запуска описан в wiki проекта.</p>
+
+<p>Теперь давайте попробуем написать что-то осмысленное. У нас в арсенале несколько макросов, один из них defsynth &ndash; аналог SynthDef в SuperCollider. Напишем определение синта в REPL:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">defsynth</span> <span class="nv">beep</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">freq</span> <span class="mi">440</span> <span class="nv">amp</span> <span class="mf">0.5</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">(</span><span class="nf">out</span> <span class="mi">0</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">* </span><span class="nv">amp</span> <span class="p">(</span><span class="nf">sin-osc</span> <span class="nv">freq</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Макрос defsynth создаст для нас функцию beep, которая принимает в качестве аргументов параметры freq (частота) и amp (амплитуда). Выполним ее:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">beep</span> <span class="mi">880</span> <span class="mf">0.5</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>&ldquo;Потушить&rdquo; звук можно с помощью команды kill:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">kill</span> <span class="nv">beep</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В Overtone внушительный список юнит-генераторов &ndash; он если и не полностью соответствует списку генераторов в SuperCollider, то очень близок к нему. Так что ваши синты, реализованные на SuperCollider можно легко транслировать на Clojure. У меня была, однако, проблема с битовыми юнит-генераторами, я или недоглядел документацию или они действительно не поддерживаются Overtone.</p>
+
+<p>Продолжим. Практически аналогичным макросу desynth является макрос definst:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">definst</span> <span class="nv">beep</span>
+</span><span class='line'>  <span class="p">[</span><span class="nv">freq</span> <span class="mi">440</span> <span class="nv">amp</span> <span class="mf">0.5</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">* </span><span class="nv">amp</span> <span class="p">(</span><span class="nf">sin-osc</span> <span class="nv">freq</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Definst определяет инструмент (в отличии от defsynth, который определяет синтезатор в том смысле, как это принятно в терминологии SuperCollider). Инструмент &ndash; это абстракция, так сказать, расширенный вариант synth, который облегчает проектирование и использование синтезаторов в Overtone. У нее есть свои особенности и отличия от synth. Нет необходимости указывать юнит-генератор out в своем инструменте &ndash; в инструменте реализован &ldquo;внутренний&rdquo; микшер, который и контролирует вывод аудиосигналов. Но такая реализация накладывает ограничение на количество выходных каналов &ndash; инструмент может звучать только в моно или в стерео. С помощью шин внутри инструмента, есть возможность управлять параметрами инструмента и цеплять к инструменту эффекты.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="c1">;; начало воспроизведения</span>
+</span><span class='line'><span class="p">(</span><span class="nf">beep</span> <span class="mi">880</span> <span class="mf">0.7</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;; добавим ревербератор в цепочку эффектов</span>
+</span><span class='line'><span class="c1">;; что в принципе бессмысленно в таком простом инструменте</span>
+</span><span class='line'><span class="p">(</span><span class="nf">inst-fx!</span> <span class="nv">beep</span> <span class="nv">fx-reverb</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;; снизим уровень громкости</span>
+</span><span class='line'><span class="p">(</span><span class="nf">inst-volume!</span> <span class="nv">beep</span> <span class="mf">0.3</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">;; наконец, остановим воспроизведение:</span>
+</span><span class='line'><span class="p">(</span><span class="nf">kill</span> <span class="nv">beep</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В Overtone есть целый ряд готовых к употреблению инструментов. Это, помимо упомянутых эффектов, несколько сэмплеров и синтезаторов. Для старта, когда нет желания углубляться в саунд дизайн, и для экспериментов с библиотекой &ndash; вполне достаточно. Кстати, одна из забавных фич Overtone &ndash; это его интеграция с Freesound. Overtone позволяет подгружать необходимые семплы из сервиса и использовать в проекте &ndash; по такому принципу реализовано sampled-piano.</p>
+
+<p>Я упоминал библиотеку at-at, которая является частью Overtone, но может быть использована вообще в любом проекте, в котором может потребоваться планировщик задач. Использовать ее безумно просто:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='clojure'><span class='line'><span class="p">(</span><span class="nf">at</span> <span class="p">(</span><span class="nb">+ </span><span class="mi">2000</span> <span class="p">(</span><span class="nf">now</span><span class="p">))</span> <span class="p">(</span><span class="nf">beep</span> <span class="mi">880</span> <span class="mf">0.8</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В качестве аргументов функция at принимает точное время, когда нужно выполнить функцию, и саму функцию &ndash; в данном случае через 2 секунды после выполнения этого кода наш инструмент начнет воспроизведение.</p>
+
+<p>В Overtone предусмотрено несколько модулей-хелперов для работы с нотами, ритмом, тональностями, интервалами, аккордами и т.д. &ndash; не слишком впечатляющая коллекция, но очевидно облегчает работу во время живых выступлений. Что еще есть в Overtone и как это использовать &ndash; можно понять, изучая код проекта на <a href="https://github.com/overtone/overtone">github</a>. Код отлично документирован и организован. Обсуждения проектов, консультации, общение происходят почтовой рассылке <a href="https://groups.google.com/forum/#!forum/overtone">https://groups.google.com/forum/#!forum/overtone</a></p>
+
+<p>Чего нет в Overtone, так это чего-то отдаленно напоминающего прокси в SuperCollider. Также нет библиотеки паттернов, но с этим проблем быть вообще не должно &ndash; в Clojure собрать свой генератор списков достаточно просто. Нет обширного сообщества, вносящего обширный вклад в развитие проекта. Но так как проект молодой и все еще развивается &ndash; это дело времени.</p>
+
+<hr />
+
+<p>Итак, в качестве эпилога. Overtone &ndash; впечатляющая библиотека, местами урезанная в возможностях по сравнению с библиотекой классов из SuperCollider, зато легко расширяемая благодаря платформе JVM. Это полноценный фронтенд к scsynth, с огромным набором юнит генераторов, с уникальными фичами вроде интеграции с Freesound или представлением синта в виде графа. Так как Overtone все еще активно разрабатывается, проектов на нем не слишком много. Среди них &ndash; <a href="https://github.com/ctford/leipzig">Leipzig</a> (композиторская библиотека), <a href="https://github.com/overtone/mini-beast#mini-beast">MiniBeast</a> (эмулятор аналогового синтезатора).</p>
+
+<p>В следующих постах постараюсь уделить внимание другим лисповым DSL.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Композиция в SuperCollider. Часть 2. Введение в паттерны]]></title>
+    <link href="http://ekozhura.github.io/supercollider-score-language-part-2"/>
+    <updated>2014-07-22T23:23:03+03:00</updated>
+    <id>http://ekozhura.github.io/supercollider-score-language-part-2</id>
+    <content type="html"><![CDATA[<p>В прошлой статье я рассмотрел потоки в SuperCollider и базовые возможности по их генерации. Между тем, в SuperCollider существуют более продвинутые способы определения потоков. Речь о паттернах и об их преимуществах.</p>
+
+<!--more-->
+
+
+<p>Паттерны &ndash; это классы, которые наследуются от базового класса <code>Pattern</code> и реализуют методы <code>asStream</code> и <code>embedInStream</code>. Для удобства названия классов-паттернов начинаются с прописной &ldquo;P&rdquo; (<code>Pbind</code>, <code>Pseries</code>, <code>Pfunc</code>, и т.д.).</p>
+
+<p>Паттерны в SuperCollider выполняют роль спецификаций, по которым строятся потоки, при этом, потоками они не являются (например, вызов <code>next</code> вернет ссылку на сам объект паттерна, как это определено в унаследованном методе <code>next</code> класса <code>Object</code>). Чтобы создать последовательность значений, необходимо вызвать метод <code>asStream</code> обьекта паттерна, который вернет экземпляр одного из подклассов <code>Stream</code>.</p>
+
+<p>Библиотека паттернов &ndash; это некоторое множество алгоритмов, которые мы можем использовать для создания потоков. Нет необходимости каждый раз писать свои генераторы для классов <code>Routine</code> и <code>FuncStream</code>, высока вероятность того, что необходимый алгоритм уже реализован в одном из паттерн-классов.</p>
+
+<p>К примеру, попробуем реализовать простейший счетчик с помощью <code>Routine</code>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">step</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">({</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nx">inc</span> <span class="o">=</span> <span class="mi">0</span><span class="o">|</span>
+</span><span class='line'>    <span class="nx">loop</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">inc</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>        <span class="nx">inc</span> <span class="o">=</span> <span class="nx">inc</span> <span class="o">+</span> <span class="nx">step</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Аналогичную последовательность мы получим, если реализуем счетчик с помощью паттернов:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">d</span> <span class="o">=</span> <span class="nx">Pseries</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">inf</span><span class="p">).</span><span class="nx">asStream</span><span class="p">;</span>
+</span><span class='line'><span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span>
+</span><span class='line'>    <span class="nx">d</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В общем случае, <code>Pseries</code> генерирует арифметическую прогрессию и принимает в качестве параметров начальное значение, разность между членами прогрессии и длину прогреcсии.</p>
+
+<p>Очевидны некоторые преимущества использования паттернов &ndash; запись более лаконична, код менее подвержен ошибкам, в действии &ndash; принцип повторного использования кода. Еще одним преимуществом паттернов в SuperCollider является их вложенность. Достигается это благодаря методу <code>embedInStream</code>, который позволяет &ldquo;встраивать&rdquo; в поток любой объект (числа, строки, символы, коллекции и т.д.).</p>
+
+<p>Попробую проиллюстрировать работу <code>embedInStream</code> таким примером. Скажем, внутри одного объекта <code>Routine</code> мы определяем еще один объект <code>Routine</code>. Первый, routeIn генерирует последовательность чисел 0, 1, 2, 3, 4, а  второй, routeOut &ndash; 200, 201, &hellip;, 209. Задача в том, чтобы включить значения внутреннего потока routeIn во внешний routeOut таким образом, чтобы при последовательном обходе элементов routeOut с помощью <code>next</code> мы имели доступ к обеим последовательностям как к единому целому. Сделать это можно таким способом:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">routeOut</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">count</span> <span class="o">=</span> <span class="nx">nil</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">routeIn</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>            <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">{</span><span class="nx">count</span> <span class="o">=</span> <span class="nx">routeIn</span><span class="p">.</span><span class="nx">next</span><span class="p">;</span> <span class="nx">count</span><span class="p">.</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span> <span class="p">({</span>
+</span><span class='line'>        <span class="nx">count</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>        <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="p">(</span><span class="nx">i</span><span class="o">+</span><span class="mi">200</span><span class="p">).</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="p">{(</span><span class="nx">m</span> <span class="o">=</span> <span class="nx">routeOut</span><span class="p">.</span><span class="nx">next</span><span class="p">).</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span><span class="p">{</span>
+</span><span class='line'>    <span class="nx">m</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>То есть, сначала мы создаем внутренний <code>Routine</code>, генерирующий последовательность [0, 1, 2, 3, 4]. Затем обходим эти элементы в цикле while и вызываем оператор <code>yield</code> для каждого элемента. Потом вызываем <code>yield</code> для элементов [200, 201, &hellip;, 209]. Таким образом, во внешнем <code>Routine</code> обе последовательности объединяются в один поток, по которому мы двигаемся с помощью <code>routeOut.next</code>.</p>
+
+<p>Метод <code>embedInStream</code> делает то же самое &ndash; встраивает объект в поток. Перепишем код:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">routeOut</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">routeIn</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>            <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">}).</span><span class="nx">embedInStream</span><span class="p">;</span>
+</span><span class='line'>    <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>        <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="p">(</span><span class="nx">i</span><span class="o">+</span><span class="mi">200</span><span class="p">).</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="p">{(</span><span class="nx">m</span> <span class="o">=</span> <span class="nx">routeOut</span><span class="p">.</span><span class="nx">next</span><span class="p">).</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span><span class="p">{</span>
+</span><span class='line'>    <span class="nx">m</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Единственный момент, который следует учесть, используя <code>embedInStream</code>. Поскольку внутри <code>embedInStream</code> вызывается оператор <code>yield</code>, то вызов <code>embedInStream</code> необходимо помещать в <code>Routine</code>, иначе будет сгенерировано исключение.</p>
+
+<p>Теперь перепишем этот пример таким образом, чтобы вместо объектов <code>Routine</code> использовать паттерны:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Pseq</span><span class="p">([</span>
+</span><span class='line'>        <span class="nx">Pseries</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+</span><span class='line'>        <span class="nx">Pseries</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">]).</span><span class="nx">asStream</span><span class="p">;</span>
+</span><span class='line'><span class="p">{(</span><span class="nx">m</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">).</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span><span class="p">{</span>
+</span><span class='line'>    <span class="nx">m</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Pseq</code> позволяет создать поток на основе заданого списка значений. В качестве параметров, помимо самого списка, принимает также число повторений списка в результирующем потоке. Когда мы вызываем метод <code>asStream</code> экземпляра класса <code>Pseq</code>, создается объект <code>Routine</code>, внутри которого вызывается метод <code>embedInStream</code>. Поведение этого метода для <code>Pseq</code> определено следующим образом &ndash; внутри цикла последовательно извлекается каждый элемент списка. В нашем случае каждый такой элемент &ndash; это экземляр класса <code>Pseries</code>. В этом же цикле управление переходит к методу <code>embedInStream</code>, определенному уже для <code>Pseries</code>. Таким образом, элементы, генерируемые объектами <code>Pseries</code>, встраиваются во внешний поток, который создается объектом класса <code>Pseq</code>.</p>
+
+<hr />
+
+<p>Итого. Паттерны позволяют инкапсулировать реализацию разнообразных генераторов потоков (получаются своего рода обертки каких-то подклассов класса <code>Stream</code>, а в большинстве случаев это будет <code>Routine</code>). Они также поддерживают вложенность и кое-какие операции трансформации (аналогичные тем, что были рассмотрены в статье о потоках), что позволяет создавать сложные паттерны из более простых. И последнее, потоки предоставляют пользователю простой и удобный API для работы с потоками. В следующей статье будет уделено больше внимания классам паттернов и операциям над ними.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Обзор Tidal]]></title>
+    <link href="http://ekozhura.github.io/tidal"/>
+    <updated>2014-07-13T23:29:35+03:00</updated>
+    <id>http://ekozhura.github.io/tidal</id>
+    <content type="html"><![CDATA[<p>Tidal &ndash; это микроязык для создания паттернов. Никаких юнит-генераторов, синтеза и dsp в Tidal нет, в качестве аудиодвижка используется внешняя библиотека Dirt. Dirt &ndash; это даже не синтезатор, а просто сэмплер. В комплекте с Dirt&#8217;ом идет набор семплов (в основном, перкуссионных), при желании можно добавить своих и использовать их с Tidal. На первый взгляд все очень просто и скромно, но тем не менее, открывает широкие возможности для экспериментов.</p>
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F153640684&amp;"></iframe>
+
+
+<!--more-->
+
+
+<p>Tidal является &ldquo;встраиваемым&rdquo; языком, он не только написан на Haskell, но и выполняется в его окружении. При этом знание Haskell не обязательно, хотя автор проекта, Алекс Маклин, и рекомендует (ну мало ли, что он рекомендует). Использование интерпретатора позволяет создавать и модифицировать паттерны на лету. Таким образом, Tidal изначально разрабатывался как язык для лайв кодинга.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="nf">d1</span> <span class="o">$</span> <span class="p">(</span><span class="n">spread&#39;</span> <span class="p">(</span><span class="n">striate&#39;</span> <span class="mi">4</span><span class="p">)</span> <span class="p">((</span><span class="o">+</span><span class="mf">0.2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">$</span> <span class="o">&gt;</span> <span class="n">slow</span> <span class="mi">8</span> <span class="n">sine1</span><span class="p">))</span> <span class="o">$</span> <span class="n">jux</span> <span class="n">rev</span> <span class="o">$</span> <span class="n">sound</span> <span class="p">(</span><span class="n">samples</span> <span class="s">&quot;[latibro*6,bd]/2&quot;</span> <span class="s">&quot;0 7 4&quot;</span><span class="p">)</span> <span class="o">|+|</span> <span class="n">speed</span> <span class="s">&quot;[1 2 1.5]/4&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F114878404&amp;"></iframe>
+
+
+<p>Код может быть как тривиальным:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="nf">d1</span> <span class="o">$</span> <span class="n">sound</span> <span class="s">&quot;bd&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Так и достаточно сложным:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="nf">d1</span> <span class="o">$</span> <span class="p">(</span><span class="n">slow</span> <span class="mi">16</span> <span class="o">$</span> <span class="n">trunc</span> <span class="mf">0.25</span> <span class="o">$</span> <span class="n">every</span> <span class="mi">3</span> <span class="p">(</span><span class="o">|+|</span> <span class="n">sound</span> <span class="s">&quot;tabla:4&quot;</span><span class="p">)</span> <span class="o">$</span> <span class="n">striate&#39;</span> <span class="mi">256</span> <span class="mf">0.2</span> <span class="o">$</span> <span class="n">sound</span> <span class="s">&quot;tabla:1&quot;</span><span class="p">)</span> <span class="o">|+|</span> <span class="n">speed</span> <span class="p">(</span><span class="n">every</span> <span class="mi">3</span> <span class="p">((</span><span class="o">*</span><span class="mf">1.8</span><span class="p">)</span> <span class="o">&lt;$&gt;</span><span class="p">)</span> <span class="o">$</span> <span class="p">((</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;$&gt;</span><span class="p">)</span> <span class="s">&quot;[[1 0.5 0.75 1.25 1.1225 1.1225 1 1.5 2], [~ 0.5 ~]/4, [4 ~ ~ 4 ~ ~ 2 6 ~ 3 ~ 8]/5]&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="o">|+|</span> <span class="n">vowel</span> <span class="s">&quot;[a o u i e]/5&quot;</span>
+</span><span class='line'><span class="o">|+|</span> <span class="n">gain</span> <span class="s">&quot;3&quot;</span>
+</span><span class='line'><span class="o">|+|</span> <span class="n">delay</span> <span class="s">&quot;[0 0 0 [0.5 0]/2 0]/3&quot;</span>
+</span><span class='line'><span class="o">|+|</span> <span class="n">delaytime</span> <span class="s">&quot;0.5&quot;</span>
+</span><span class='line'><span class="o">|+|</span> <span class="n">delayfeedback</span> <span class="s">&quot;0.6&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F149775631&amp;"></iframe>
+
+
+<p>В Tidal реализовано некоторое количество функций для генерации и преобразования паттернов, и также поощряется расширение пользовательскими функциями. Событийная модель отличается от SuperCollider и Common Music тем, что паттерны не являются последовательностью (или потоком) событий, а скорее функцией значения времени от события, что по мнению автора дает некоторые преимущества для лайв кодинга. Автор также упоминал расширения, которые включают интеграцию с OSC протоколом.</p>
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F129063081&amp;"></iframe>
+
+
+<p>Порог входа в Tidal достаточно низкий &ndash; синтаксис простой и лаконичный, функций не так много.
+Правда перед работой необходимо пройти нетривиальный квест по установке (установи это, запусти то), и столкнутся с некоторыми ограничениями (только emacs, только хардкор)<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>. Помимо Dirt, для запуска Tidal требуется Jack. Я говорил, что в качестве редактора мы ограничены emacs?</p>
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F127869914&amp;"></iframe>
+
+
+<p>Лаконичный синтаксис Tidal подталкивает к разным инициативам вроде Tidal cycles (аналог SCTweets, твиты со снэпшотами) или 365 Tidal Patterns (челендж &ndash; один паттерн в день на протяжении года). Код сопровождается аудиопримерами, прослушал, скопировал, запустил. А дальше модифицируй, как тебе вздумается.</p>
+
+<iframe width="100%" height="166" scrolling="no" frameborder="no" src="http://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F127442915&amp;"></iframe>
+
+
+<p>Информация о проекте: <a href="http://yaxu.org/">http://yaxu.org/</a></p>
+
+<p>Github: <a href="https://github.com/yaxu/Tidal/">https://github.com/yaxu/Tidal/</a></p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p><strong>UPDATE</strong> &ndash; плагин для <strong>Vim</strong> https://github.com/munshkr/vim-tidal/<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Композиция в SuperCollider. Часть 1. Потоки]]></title>
+    <link href="http://ekozhura.github.io/supercollider-score-language-part-1"/>
+    <updated>2014-07-13T09:04:59+03:00</updated>
+    <id>http://ekozhura.github.io/supercollider-score-language-part-1</id>
+    <content type="html"><![CDATA[<p>Основой алгоритмической композиции, по сути, являются математические методы генерации партитур. Синтаксические конструкции или библиотеки функций и классов, которые используются в композиции, часто выделяются в так называемый score language, то есть язык, который используется для определения партитур. Score language в SuperCollider базируется на потоках (абстрактный класс Stream), событиях (класс Event) и  паттернах (абстрактный класс Pattern). Сперва рассмотрим потоки.</p>
+
+<!--more-->
+
+
+<p>Термины <strong>итератор</strong>, <strong>генератор</strong> и <strong>поток</strong> в разных языках программирования используются для описания похожих концепций и абстракций, но не всегда аналогичных. В общем случае, итератор &ndash; это объект, который осуществляет последовательный доступ к элементам коллекции. Это несколько отличается от перебора элементов коллекции по их индексам.</p>
+
+<p>Интерфейс итератора предполагает следующее поведение. Во-первых, необходимо инициализировать итератор с каким-то начальным состоянием и сбрасывать состояние итератора на начальное. Начальное состояние чаще всего предполагает, что итератор вернет первый элемент коллекции. Во-вторых, необходимо извлекать следующий элемент коллекции. И наконец, если коллекция имеет конечное число элементов, необходимо каким-то образом узнать, что были перебраны все элементы.</p>
+
+<p>Генератор &ndash; это специальная функция, которая сохраняет внутреннее состояние и способна приостановить свое выполнение. Когда функция будет вызвана в следующий раз, то она продолжит выполнение на том месте, где остановилась, вместо того чтобы отработать заново. Это достигается вызовом специального оператора yield, который возвращает значение (аналогично оператору return) и приостанавливает функцию до ее следующего вызова.</p>
+
+<p>Пример генератора на Python:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">counter</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">yield</span> <span class="n">n</span>
+</span><span class='line'>        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В примере реализован счетчик, который сгенерирует новое значение каждый раз, когда будет вызван. Поскольку в цикле отсутствует условие выхода из цикла, счетчик по сути генерирует бесконечную последовательность целых чисел.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">counter</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+</span><span class='line'><span class="mi">2</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+</span><span class='line'><span class="mi">3</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+</span><span class='line'><span class="mi">4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из примера, поведение генератора аналогично итератору.</p>
+
+<p>Ну и наконец, потоки (данных) &ndash; своего рода &ldquo;ленивые&rdquo; списки (lazy lists). Это означает, что элементы коллекции вычисляются &ldquo;по требованию&rdquo;, всякий раз при попытке доступа к ним. Собственно, потоки &ndash; это абстракция, структура данных с определенными свойствами. Реализуются они с помощью итераторов и генераторов. Так как элементы вычисляются тогда, когда к ним пытаются получить доступ, потоки могут быть бесконечными (как в примере счетчика).</p>
+
+<p>В SuperCollider потоки определяются набором классов, которые наследуются от абстрактного класса <code>Stream</code>. Каждый поток реализует метод <code>next</code>, позволяющий получать последовательный доступ к элементам в потоке. Интересно то, что для абстрактного класса <code>Object</code> так же определен метод <code>next</code> (который возвращает <code>this</code>), а поскольку в SuperCollider все классы наследуются от <code>Object</code>, то любой объект по сути может быть рассмотрен как поток. Метод <code>reset</code>, если он реализован, сбрасывает состояние потока на начальное или просто возвращает <code>nil</code>.</p>
+
+<p>Наиболее полезными классами-потомками <code>Stream</code> являются <code>FuncStream</code> и <code>Routine</code>. <code>FuncStream</code> позволяет нам использовать функции при вызове методов <code>next</code> и <code>reset</code>.</p>
+
+<p>В следующем примере мы определяем функцию как аргумент конструктора, которая будет выполнятся всякий раз, когда мы вызываем метод <code>next</code>. И всякий раз эта функция будет возвращать число, выбранное из заданного списка случайным образом. Тем самым, с помощью экземпляра класса <code>FuncStream</code>, мы можем определить бесконечный поток, состоящий из случайных чисел.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">FuncStream</span><span class="p">.</span><span class="k">new</span><span class="p">({</span> <span class="err">#</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">].</span><span class="nx">choose</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Функция для метода <code>reset</code> не определена, а потому вызвав <code>reset</code>, мы получим <code>nil</code>.</p>
+
+<p>Класс <code>Routine</code> также позволяет запускать функцию для определения значений в потоке данных, но особенность <code>Routine</code> в том, что объекты этого класса являются генераторами. То есть, с помощью <code>yield</code> мы сохраняем текущее состояние и приостанавливаем выполнение функции до следующего вызова метода <code>next</code>. Исчерпав все вызовы <code>yield</code>, в конечном итоге функция вернет <code>nil</code>. Простейшие примеры:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span> <span class="mi">1</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="mi">2</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>  <span class="c1">// 1</span>
+</span><span class='line'><span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>  <span class="c1">// 2</span>
+</span><span class='line'><span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>  <span class="c1">// nil</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">3</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="mi">4</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span> <span class="c1">// выведет последовательно 0, 1, 2, nil</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>К потоку можно применять математические операции, его можно отфильтровать или применять функции к каждому элементу.</p>
+
+<p>Метод <code>collect</code> &ndash; аналогичен функции map в функциональных языках программирования, а именно над каждым элементом выполняется какое-то действие, в результате мы получаем новый, уже трансформированный поток. В данном примере, к числам от 0 до 9 будет прибавлено 100:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">collect</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">item</span><span class="p">;</span> <span class="nx">item</span> <span class="o">+</span> <span class="mi">100</span> <span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">b</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Методы <code>select</code> и <code>reject</code> позволяют создать новый поток из элементов текущего, если эти элементы удовлетворяют условию (в случае <code>select</code>) или не удовлетворяют условию (в случае <code>reject</code>). Например, необходимо отобрать все нечетные числа из последовательности:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="c1">// функция, определенная в select будет возвращать true для всех нечетных чисел</span>
+</span><span class='line'><span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">select</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">item</span><span class="p">;</span> <span class="nx">item</span><span class="p">.</span><span class="nx">odd</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">b</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Аналогичную функцию, но с использованием <code>reject</code> можно переписать таким образом:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span> <span class="p">})</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="c1">// функция, определенная в reject будет возвращать false для всех четных чисел</span>
+</span><span class='line'><span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">reject</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">item</span><span class="p">;</span> <span class="nx">item</span><span class="p">.</span><span class="nx">even</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">b</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<hr />
+
+<p>Вот, собственно, и вся базовая информация об итераторах, потоках и их реализации в SuperCollider. В следующих постах я рассмотрю события и паттерны в SuperCollider. В общем, продолжение следует.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Юнит-генераторы]]></title>
+    <link href="http://ekozhura.github.io/unit-generators-part-1"/>
+    <updated>2014-07-08T19:01:27+03:00</updated>
+    <id>http://ekozhura.github.io/unit-generators-part-1</id>
+    <content type="html"><![CDATA[<p>Пионер компьютерной музыки Макс Метьюс в своем языке MUSIC III впервые реализовал (а в последующих версиях и развил) несколько важных идей. Впоследствии, эти идеи легли в основу многих современных языков для создания компьютерной музыки.</p>
+
+<!-- more -->
+
+
+<p>Одной из таких идей является концепция юнит-генераторов, согласно которой при написании программы применяются отдельные функциональные блоки. Каждый такой блок выполняет одну конкретную задачу по генерации или обработке аудиосигналов. Комбинируя эти блоки, пользователь имеет возможность создавать достаточно сложные программы.</p>
+
+<p>По мнению Метьюса, такой подход обеспечивал композитора гибкостью и простотой использования. С одной стороны, уже не было необходимости вручную определять значение каждого отсчета в цифровом сигнале (как бы сейчас ни смешно это звучало). С другой стороны, создание инструмента для синтеза по принципу черного ящика было слишком дорогим развлечением на то время. С юнит-генераторами композитор сам определял структуру, и он решал много или мало компонентов поместить.</p>
+
+<p>Для обозначения юнит-генераторов Метьюс использовал наименования компонентов аналоговых синтезаторов. Так, среди юнит-генераторов есть осцилляторы (<strong>OSC</strong>), фильтры (<strong>FLT</strong>), генераторы огибающих (<strong>ENV</strong>). Но ими коллекция блоков не ограничивается &ndash; еще сумматоры (<strong>ADD2</strong>, <strong>ADD3</strong>, <strong>ADD4</strong>), мультипликаторы (<strong>MLT</strong>), блок для вывода сигналов (<strong>OUT</strong>), генераторы случайных значений (<strong>RAN</strong>, <strong>RAH</strong>).</p>
+
+<p>Программа составляется таким образом, чтобы выходной сигнал одного юнит-генератора поступал на вход другого, и так вплоть до блока вывода. Структуру программы затем можно представить в виде блок-схемы (MUSIC V):</p>
+
+<p><img class="left thumb" src="http://ekozhura.github.io/images/block-diagram-music-v.jpg"></p>
+
+<p>Примеры программ на языке MUSIC V<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">10</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P5</span> <span class="nv">P6</span> <span class="nv">B2</span> <span class="nv">F1</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="nv">AD2</span> <span class="nv">P7</span> <span class="nv">V1</span> <span class="nv">B3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OUT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">0</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P5</span> <span class="nv">P7</span> <span class="nv">B2</span> <span class="nv">F3</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P6</span> <span class="nv">P7</span> <span class="nv">B3</span> <span class="nv">F4</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">AD2</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">B2</span> <span class="nv">P8</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">V1</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OUT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="k">END</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">3</span> <span class="mf">.999</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">4</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.999</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.99</span> <span class="mi">50</span> <span class="mf">.99</span> <span class="mi">205</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">306</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">461</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
+</span><span class='line'><span class="nb">NOT </span><span class="mi">0</span> <span class="mi">3</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">2000</span> <span class="mf">.0128</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nb">NOT </span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">1</span> <span class="mi">2000</span> <span class="mi">0</span> <span class="mf">.0256</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nv">TER</span> <span class="mi">3</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Напрашивается аналогия с модульными синтезаторами, где используется тот же прием. Более того, может показаться, что это принцип и был изначально позаимствован у первых модульных синтезаторов. Интересно то, что выпуск первых коммерческих модульных синтезаторов пришелся на тот же период, что и выход MUSIC III &ndash; это первая половина 60-ых годов. Еще один пионер компьютерной музыки, Жан Клод Риссе, который в те годы работал в Bell Labs совместно с Максом Метьюсом, утверждал что Роберт Муг (создатель одного из первых коммерческих модульных синтезаторов) был осведомлен о разработках и идеях Макса. Жан Клод и Роберт переписывались какое-то время, обсуждая друг с другом эти идеи<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>.</p>
+
+<p>Впрочем, по словам самого Макса, выход его программы опередил Роберта Муга всего на пару лет, это была своего рода логическая эволюция цифровых и аналоговых синтезаторов, идея, витавшая в воздухе и реализованная инженерами  того времени независимо друг от друга. &ldquo;В любом случае, это было огромное преимущество, потому что музыкант, который имел представление о коммутации модулей синтезаторов Муга, мог понять как соединить юнит генераторы на компьютере&rdquo;, &ndash; заметил Метьюс.</p>
+
+<p>MUSIC V нашел свое развитие в языке Csound, где число юнит-генераторов (опкодов, в терминологии Csound) значительно возросло. Язык Max, который изначально использовался сугубо для управления внешними &ldquo;железными&rdquo; синтезаторами и DSP-процессорами, со временем эволюционировал в полноценную среду для синтеза аудио и обзавелся собственными юнит-генераторами (две наиболее популярных среды использующих язык Max &ndash; Pure Data и Max/MSP). SuperCollider и ChucK используют юнит-генераторы для обозначения и скомпилированных модулей для своих аудиодвижков, и специальных классов для работы с этими модулями.</p>
+
+<p>NI Reaktor и AudioMulch в эту компанию не входят, так как оперируют более высокоуровневыми абстракциями (синтезаторы, семплеры, драм-машины, эффекты) и не предполагают программирования, только коммутацию модулей (впрочем, с пятой версии в Reaktor предусмотрен режим разработки на низком уровне, аналогогичный Max).</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>Примеры программ и диаграмма взяты из книги M.Mathews <em>&ldquo;The Technology of Computer Music&rdquo;</em>, 1969.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>Этот факт был упомянут в примечании к интервью с Максом Метьюсом для Computer Music Journal в 2008 году.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[О языках]]></title>
+    <link href="http://ekozhura.github.io/about-languages"/>
+    <updated>2014-07-07T18:47:51+03:00</updated>
+    <id>http://ekozhura.github.io/about-languages</id>
+    <content type="html"><![CDATA[<p>Несколько слов о тематике блога &ndash; о языках и средах для синтеза аудио и алгоритмической композиции. Почему они все еще актуальны, несмотря на многообразие DAW и VST плагинов, и почему стоит изучить хотя бы один из них.</p>
+
+<!-- more -->
+
+
+<p>Первые языки программирования для синтеза аудио также были первыми (и единственными) программами для создания музыки. Они разрабатывались в НИИ, выполнялись на огромных и дорогих ЭВМ. С ними работали ученые и композиторы, чья деятельность предвосхитила облик компьютерной музыки на десятилетия.</p>
+
+<p>Но с тех пор многое изменилось. С появлением персональных компьютеров и постепенным наращиванием их мощностей, появилось разнообразное программное обеспечения для создания музыки. Стало возможным не только эмулировать реальные, &ldquo;железные&rdquo; синтезаторы, но и разрабатывать принципиально новые. Для создания партитур и ритмических рисунков уже нет необходимости использовать специальный синтаксис &ndash; им на смену пришло множество инструментов с графическим интерфейсом. Сочинение музыки на персональных компьютерах стало доступным многим, как профессиональным музыкантам и композиторам, так и любителям.</p>
+
+<p>Сейчас нет необходимости писать программный код &ndash; современные софтверные синтезаторы обладают широкими возможностями для определения всевозможных тембров. Алгоритмическая композиция постепенно проникает в коммерческие секвенсоры.</p>
+
+<p>И тем не менее, языки программирования и среды разработки продолжают свое существование, некоторые из них достаточно популярны. Объясняется это несколькими причинами.</p>
+
+<p>Во-первых, низкий (относительно) порог входа. Max/MSP, Csound, SuperCollider и др. относятся к классу предменто-специфических языков (domain-specific languages), их отличие от С++ или Java &ndash; это не только специализация в конкретной предметной области. В первую очередь они обладают необходимым набором абстракций для выполнения таких задач как синтез, фильтрация или вывод сигналов. В случае языков общего назначения, придется писать программы на более низком уровне и это требует б<strong>о</strong>льших усилий и знаний. К примеру, начать работу в Max/MSP можно даже не имея предварительного опыта программирования.</p>
+
+<p>Во-вторых, свобода действий. Работая с софтверными синтезаторами и секвенсорами мы постоянно имеем дело с ограничениями. Это вовсе не недостаток, ведь такие синтезаторы обладают достаточно внушительным функционалом. Но работая с программной средой, пользователь получает дополнительные возможности. И дело даже не в том, что мы ограничены только своим воображением. Насколько простым или насколько сложным будет такой инструмент &ndash; зависит только от нас. Свобода воли в действии.</p>
+
+<p>В-третьих, повторное использование. Мы неограничены стандартными библиотеками сред разработки. Классы, объекты, плагины, библиотеки распространяются разработчиками специально для дальнейшего использования сообществом. Например, библиотека BBCut2 (для SuperCollider) может быть использована в вашем проекте для автоматического слайсинга ударных и алгоритмического секвенсирования. Или библиотека FTM, расширяющая Max/MSP некоторыми сложными структурами данных (матрицы, словари, кортежи).</p>
+
+<p>В-четвертых, чаще всего это open-source проекты &ndash; распространяются бесплатно, поддерживаются многочисленным сообществом энтузиастов, с поддержкой нескольких операционных систем.</p>
+
+<p>И наконец,  подходящий инструмент для учебных целей. Даже скоротав пару вечеров за Max/MSP или Pure Data, можно извлечь ценный опыт. Хорошее подспорье для того чтобы усвоить различные методы синтеза, разобраться в способах обработки аудио.</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Композиция в SuperCollider. Часть 3. Время и планировщики задач - Machine Musicianship</title>
+  <meta name="author" content="Evgeny Kozhura">
+
+  
+  <meta name="description" content="Композиция в SuperCollider. Часть 3. Время и планировщики задач Добавлено 27.03.15 02:34AM Эта статья &ndash; небольшое отступление от темы Score &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ekozhura.github.io/supercollider-score-language-part-3">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Machine Musicianship" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-52650548-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+  <body>
+    <a href="/" class="home-icon">
+      <img src="/images/home.png"/>
+    </a>
+
+    <article role="article" class="full-single-article">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <h1>Композиция в SuperCollider. Часть 3. Время и планировщики задач</h1>
+        <div class="meta">
+          Добавлено 
+
+
+
+
+
+
+
+
+  
+
+
+
+<time datetime="2015-03-27T02:34:44+02:00" pubdate data-updated="true">27.03.15 02:34AM</time>
+          
+
+
+        </div>
+        <p>Эта статья &ndash; небольшое отступление от темы Score Language в SuperCollider. Но безусловно необходимое для дальнейшего продвижения по теме событий и паттернов. Речь пойдет о планировщиках задач и о работе со временем в SuperCollider.</p>
+
+<!-- more -->
+
+
+<p>В предыдущих статьях я рассмотрел потоки данных и способы их генерации с помощью <code>Routine</code>, <code>FuncStream</code>, и паттернов. Особенно интересен класс <code>Routine</code>, который с помощью <code>yield</code> может приостанавливать свое выполнение, возвращать значение и при повторном вызове продолжать выполнение с места остановки.</p>
+
+<p>У <code>Routine</code> есть еще одна интересная особенность &ndash; мы можем явно указать задержку по времени, после которой процедура восстановит выполнение. Для этого, вместо <code>next</code>, мы посылаем объекту <code>Routine</code> сообщение <code>play</code>. Время задержки будет определяться числовым значением, которое вернет <code>yield</code>. В этом примере итерация цикла выполняется через каждые полсекунды:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">c</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">100</span><span class="p">.</span><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>        <span class="o">|</span><span class="nx">i</span><span class="o">|</span>
+</span><span class='line'>        <span class="p">(</span><span class="s2">&quot;Current value : &quot;</span> <span class="o">+</span> <span class="nx">i</span><span class="p">).</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">c</span><span class="p">.</span><span class="nx">play</span><span class="p">;</span> <span class="c1">// старт</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">c</span><span class="p">.</span><span class="nx">stop</span><span class="p">;</span> <span class="c1">// в любой момент можно остановить проигрывание.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В данном случае <code>Routine</code> выполняет совершенно другую задачу, не связанную с генерацией значений. Возможно, чтобы подчеркнуть, что значение, которое возвращает <code>yield</code> &ndash; это именно время задержки, для классов <code>Float</code> и <code>Integer</code> определен специальный метод <code>wait</code>, который по сути является псевдонимом <code>yield</code> <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>. Тот же пример, но с методом <code>wait</code>, нагляднее демонстрирует поведение функции в <code>Routine</code>. Теперь код выглядит так, как будто на каждой итерации мы не значение возвращаем, а делаем паузу на полсекунды.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">c</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">100</span><span class="p">.</span><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>        <span class="o">|</span><span class="nx">i</span><span class="o">|</span>
+</span><span class='line'>        <span class="p">(</span><span class="s2">&quot;Current value : &quot;</span> <span class="o">+</span> <span class="nx">i</span><span class="p">).</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Таким образом, с помощью <code>Routine</code> можно написать простой планировщик задач <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>. Определим функцию, которая принимает в качестве аргументов время задержки (параметр <code>delta</code>) и функцию, которую необходимо выполнять всякий раз по прошествию заданного времени <code>delta</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">w</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">arg</span> <span class="nx">delta</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="nx">func</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">sched</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">inf</span><span class="p">.</span><span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">();</span>
+</span><span class='line'>            <span class="nx">delta</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>    <span class="nx">sched</span><span class="p">.</span><span class="nx">play</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'><span class="c1">// функция w вернет ссылку на объект sched</span>
+</span><span class='line'><span class="nx">z</span> <span class="o">=</span> <span class="nx">w</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;event occured&quot;</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">z</span><span class="p">.</span><span class="nx">stop</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Именно так работает метод <code>sched</code> в семействе классов <code>Clock</code>, и используется он как раз для этих целей &ndash; выполнение задач в какой-то момент в будущем <sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>. И именно его использует <code>Routine</code> в ответ на сообщение <code>play</code>, поэтому предыдущий пример можно переписать так:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// остановить выполнение можно с помощью cmd + .</span>
+</span><span class='line'><span class="nx">SystemClock</span><span class="p">.</span><span class="nx">sched</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;event occured!&quot;</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="mi">2</span><span class="p">;</span> <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Как видно из примера, если функция возвращает числовое значение, <code>SystemClock.sched</code> будет повторять выполнение этой функции снова и снова, а временем задержки будет возвращаемое функцией числовое значение. В данном случае, время задержки 2 секунды.</p>
+
+<p>Абстрактный класс <code>Clock</code> и его потомки &ndash; <code>SystemClock</code>, <code>AppClock</code> и <code>TempoClock</code> предназначены для отсчета времени, как на то намекают их названия. У каждого конкретного класса свое назначение. <code>SystemClock</code> и <code>AppClock</code> всегда отсчитывают время в секундах и не могут быть инстанциированы. У <code>AppClock</code> более низкий системный приоритет, поэтому он используется там, где точность времени не критична &ndash; например для работы с GUI. <code>TempoClock</code> предоставляет такой же точный тайминг, как и <code>SystemClock</code>, но возвращает не секунды, а количество ударов в секунду (beats per second). Плюс, в отличии от других классов, можно инстанциировать сколько угодно экземляров <code>TempoClock</code>, при этом при старте SuperCollider по умолчанию создается один экземпляр и он становится доступен по <code>TempoClock.default</code>.</p>
+
+<p>Идея в том, что каждый отсчет времени в <code>SystemClock</code> и <code>AppClock</code> &ndash; это постоянная величина, ведь секунда есть секунда. Поэтому особого смысла инстанциировать несколько экземпляров каждого из этих классов нет. А с <code>TempoClock</code> все иначе, beats per second &ndash; величина относительная, и если меняется темп, то меняется и интервал между двумя отсчетами. Разные счетчики позволяют выполнять запланированные функции с разной частотой:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">c</span> <span class="o">=</span> <span class="nx">TempoClock</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="nx">d</span> <span class="o">=</span> <span class="nx">TempoClock</span><span class="p">(</span><span class="mf">0.5</span><span class="p">);</span> <span class="c1">// темп в два раза медленнее</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">c</span><span class="p">.</span><span class="nx">sched</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span> <span class="o">|</span><span class="nx">b</span><span class="o">|</span> <span class="p">[</span><span class="s2">&quot;Beats from c:&quot;</span><span class="p">,</span> <span class="nx">b</span><span class="p">].</span><span class="nx">postln</span><span class="p">;</span> <span class="mi">1</span> <span class="p">});</span>
+</span><span class='line'><span class="nx">d</span><span class="p">.</span><span class="nx">sched</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span> <span class="o">|</span><span class="nx">b</span><span class="o">|</span> <span class="p">[</span><span class="s2">&quot;Beats from d:&quot;</span><span class="p">,</span> <span class="nx">b</span><span class="p">].</span><span class="nx">postln</span><span class="p">;</span> <span class="mi">1</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Итак, вернемся к <code>Routine</code> и рассмотрим, как работает метод <code>play</code>. Метод <code>play</code> определен для базового класса <code>Stream</code> и доступен для всех его потомков, не только для <code>Routine</code>. Его поведение следующее &ndash; если при вызове метода в качестве аргумента был передан экземпляр класса <code>Clock</code> (или его подклассов), то этому объекту посылается сообщение <code>play</code>. В противном случае, это сообщение посылается дефолтному счетчику, который возвращает <code>TempoClock.default</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="cm">/* метод play класса Stream */</span>
+</span><span class='line'><span class="cm">/* File: supercollider/SCClassLibrary/Common/Streams/Stream.sc */</span>
+</span><span class='line'><span class="nx">play</span> <span class="p">{</span> <span class="nx">arg</span> <span class="nx">clock</span><span class="p">,</span> <span class="nx">quant</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">clock</span> <span class="o">=</span> <span class="nx">clock</span> <span class="o">?</span> <span class="nx">TempoClock</span><span class="p">.</span><span class="k">default</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">clock</span><span class="p">.</span><span class="nx">play</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">quant</span><span class="p">.</span><span class="nx">asQuant</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Сам же метод <code>play</code> в классе <code>Clock</code> &ndash; это обертка метода <code>sched</code>, поэтому код <code>SystemClock.play({ "event occured!".postln; 2; })</code> будет аналогичен <code>SystemClock.sched(0, { "event occured!".postln; 2; });</code></p>
+
+<p>Остановить задачу можно с помощью метода <code>stop</code>. Этот метод останавливает выполнение функции внутри <code>Routine</code>, как если бы она достигла конца. После этого любая попытка возобновить выполнение (к примеру с помощью методов <code>next</code> или <code>value</code>) ни к чему не приведет. Можно лишь заново начать выполнение <code>Routine</code> с помощью метода <code>reset</code>.</p>
+
+<p>Вот такое поведение не всегда желательно. Если необходимо поставить на паузу задачу, то <code>Routine</code> для этих целей не подойдет &ndash; <code>yield</code> (или <code>wait</code>) внутри <code>Routine</code> всегда будет возвращать одно и то же значение в качестве времени задержки. Не говоря о том, что сама по себе пауза означает задержку, не определенную по времени &ndash; 5 секунд, 10 минут, 2 часа.</p>
+
+<p>Тут на помощь приходит <code>PauseStream</code> и его два важных подкласса <code>EventStreamPlayer</code> и <code>Task</code>. <code>EventStreamPlayer</code> имеет смысл рассмотреть в отдельной статье вместе с событиями и с потоками событий. Что касается <code>Task</code>, то он во многом повторяет поведение <code>Routine</code> (по существу, это обертка вокруг <code>Routine</code>, поэтому методы <code>yield</code> и <code>wait</code> будут работать внутри <code>Task</code>), в то же время наследует у <code>PauseStream</code> способность ставать на паузу и восстанавливать выполнение.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">d</span> <span class="o">=</span> <span class="nx">Routine</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">50</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="nx">i</span><span class="p">.</span><span class="nx">squared</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Функция, определенная в <code>Routine</code>, может передана в <code>Task</code> без изменений. Но поведение методов <code>play</code>, и <code>stop</code> отличается от соответствующих методов в <code>Routine</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">t</span> <span class="o">=</span> <span class="nx">Task</span> <span class="p">{</span>
+</span><span class='line'>    <span class="mi">50</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="nx">i</span><span class="p">.</span><span class="nx">squared</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'>        <span class="mf">0.5</span><span class="p">.</span><span class="nx">wait</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'><span class="c1">// весь набор для управления выполнением задачи</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">play</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">pause</span>     <span class="c1">// аналогичен stop</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">resume</span>    <span class="c1">// аналогичен play</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">stop</span>
+</span><span class='line'><span class="nx">t</span><span class="p">.</span><span class="nx">reset</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Task</code> не является стопроцентной заменой <code>Routine</code>, в нем иногда обнаруживается довольно странное поведение, о чем предупреждает хелп файл по классу. К тому же, <code>Routine</code> наследует свое поведение не только от <code>Stream</code>, но и от <code>Thread</code>. А <code>Task</code> по-прежнему остается подклассом <code>Stream</code>, интерфейс которого расширяется с помощью <code>PauseStream</code> <sup id="fnref:4"><a href="#fn:4" rel="footnote">4</a></sup>.</p>
+
+<hr />
+
+<p>В следующей статье я обязательно рассмотрю такое важное понятие в SuperCollider как Событие (<code>Event</code>). <code>Event</code> в SuperCollider обозначает именно музыкальное событие (например, проигрывание ноты), поэтому имеет к композиции самое непосредственное отношение. Но в тоже время объекты этого класса применяются и для (неожиданно) прототипирования классов в SuperCollider. А поскольку я параллельно пишу статьи по ООП в SuperCollider, то буквально разрываюсь, с какой стороны подойти к теме ивентов. Но как бы там ни было, следующая статья по SuperCollider должна быть посвящена классу <code>Event</code>.</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>Строго говоря, метод <code>wait</code> просто вызывает <code>yield</code>, соотвественно все правила для <code>yield</code> будут справедливы и для <code>wait</code>. Например, вызвав <code>wait</code> в какой-нибудь функции вне <code>Routine</code> мы получим стандартное исключение <em>&ldquo;yield was called outside of a Routine&rdquo;</em>.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>В зависимости от контекста, <em>Планировщик</em> может соответствовать одному из двух шаблонов &ndash; Scheduler или Scheduled Task. Между ними есть разница, несмотря на созвучные названия. В статье речь идет именно о Scheduled Task. Подробнее о шаблоне: http://c2.com/cgi/wiki?ScheduledTask.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>Аналогичное поведение функции <code>at</code> в Overtone.<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+<li id="fn:4">
+<p>Вообще, если придираться к словам, то оба родительских класса <code>PauseStream</code> и <code>Thread</code> классов <code>Task</code> и <code>Routine</code>, наследуются от общего предка <code>Stream</code>. И каждый по своему расширяет интерфейс <code>Stream</code> уникальным поведением. Но если <code>PauseStream</code> &ndash; это все еще <code>Stream</code>, то семантика <code>Thread</code> никакого отношения к потокам не имеет и наследуется от <code>Stream</code> чисто формально, чтобы передать некоторые его свойства классу <code>Routine</code>. Все-таки, множественного наследования в SuperCollider нет, а композицией делу поможешь.<a href="#fnref:4" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+
+
+        <hr class="divider-short"/>
+
+        
+          <a class="pull-left" href="/supercollider-oop-part-1" title="Previous Post: ООП в SuperCollider. Часть первая. Сообщения">&laquo; ООП в SuperCollider. Часть первая. Сообщения</a>
+        
+
+        
+
+        <div style="clear: both;"></div>
+
+        <hr class="divider-short"/>
+
+        
+        <section>
+          <h1>Комментарии</h1>
+          <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+        </section>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+<hr class="divider-short"/>
+
+<div class="archive-link">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+
+      </div>
+    </div>
+  </div>
+</div>
+    <footer id="footer" class="her-row">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+  <a href="/"><h4>Главная</h4></a>
+</div>
+
+<div class="col-md-2">
+  <div class="social-icon-list">
+    
+
+    
+    <a href="https://github.com/ekozhura"><img src="/images/glyphicons_social_21_github.png"/></a>
+    
+
+    
+
+    
+  </div>
+</div>
+
+<div class="pull-right">
+  <h4>Блог на основе <a href="http://octopress.org/">Octopress</a>. Дизайн темы <a href="http://AdrianArtiles.com">Adrian Artiles</a>.</h4>
+</div>
+
+
+    </div>
+  </div>
+</footer>
+
+    
+
+<script type="text/javascript">
+      var disqus_shortname = 'machinemusicianship';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ekozhura.github.io/supercollider-score-language-part-3';
+        var disqus_url = 'http://ekozhura.github.io/supercollider-score-language-part-3';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+  </body>
+</html>

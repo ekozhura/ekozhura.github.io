@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ООП в SuperCollider. Часть первая. Сообщения - Machine Musicianship</title>
+  <meta name="author" content="Evgeny Kozhura">
+
+  
+  <meta name="description" content="ООП в SuperCollider. Часть первая. Сообщения Добавлено 24.10.14 08:49AM Прежде чем продолжить цикл о библиотеке паттернов, решил вернуться немного &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ekozhura.github.io/supercollider-oop-part-1">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Machine Musicianship" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-52650548-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+  <body>
+    <a href="/" class="home-icon">
+      <img src="/images/home.png"/>
+    </a>
+
+    <article role="article" class="full-single-article">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <h1>ООП в SuperCollider. Часть первая. Сообщения</h1>
+        <div class="meta">
+          Добавлено 
+
+
+
+
+
+
+
+
+  
+
+
+
+<time datetime="2014-10-24T08:49:44+03:00" pubdate data-updated="true">24.10.14 08:49AM</time>
+          
+
+
+        </div>
+        <p>Прежде чем продолжить цикл о библиотеке паттернов, решил вернуться немного назад и детально разобрать, как писать объектно-ориентированный код в SuperCollider. И первое, что нужно знать &ndash; это то, что реализация ООП в SuperCollider аналогична Smalltalk (а это значит, что если документации по SuperCollider недостаточно для понимания ООП, пригодятся и учебные пособия по Smalltalk).</p>
+
+<!--more-->
+
+
+<p>Итак, все сущности в программе являются объектами &ndash; числа, строки, коллекции, функции и т.д. Объекты создаются с помощью классов. Класс определяет поведение объектов и их состояния (с помощью методов и свойств, соответственно). Для понимания классов, часто проводят аналогию с чертежами (blueprints), по которым и создаются экземпляры-объекты. Классы упорядочены иерархически &ndash; они наследуют поведение от родительского класса и могут передавать свое поведение дочерним классам (подклассам).</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Dictionary</span><span class="p">.</span><span class="k">new</span><span class="p">;</span> <span class="c1">// создаем объект класса Dictionary</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Объекты взаимодействуют друг с другом посредством сообщений (message). Возможность принимать то или иное сообщение определяется наличием необходимого метода. Например, объект класса Number принимает сообщение <code>*</code>, если реализует метод с таким же именем. При этом, за поведение метода <code>*</code> целиком отвечает объект-получатель (receiver), сообщение только определяет желаемую операцию (умножение в данном случае). В этом ключевая особенность. Объекты разных классов могут по-разному реагировать на одно и то же сообщение <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>.</p>
+
+<p>Итак, в SuperCollider есть несколько способов вызова методов объекта. Первый способ &ndash; собственно передача сообщения объекту-получателю (message passing). Синтаксис следующий &ndash; объект-получатель и сообщение разделены точкой, затем в скобках указан список аргументов.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">4</span><span class="p">.</span><span class="nx">dup</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span> <span class="c1">// вернет [4, 4, 4]</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span> <span class="c1">// вернет 6</span>
+</span><span class='line'><span class="mi">5</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">6</span><span class="p">).</span><span class="nx">dup</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span> <span class="c1">// цепочка сообщений, вернет [6, 6, 6, 6, 6]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Второй способ &ndash; в виде бинарной операции. Такая запись является единственной возможной для методов, имена которых выраженны спец символами вроде <code>+</code>, <code>-</code>, <code>&amp;</code>, <code>&gt;</code> (логические и математические выражения). Так, например умножение мы запишем как <code>4 * 5</code> и не иначе (при попытке выполнить <code>4.*(5)</code> мы получим ошибку). Но и другие методы, которые принимают 1 аргумент, можно выразить в виде бинарных операций, добавив к имени двоеточие:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">4</span> <span class="nx">dup</span><span class="o">:</span> <span class="mi">3</span><span class="p">;</span> <span class="c1">// вернет [4, 4, 4]</span>
+</span><span class='line'><span class="mi">5</span> <span class="nx">max</span><span class="o">:</span> <span class="mi">6</span><span class="p">;</span> <span class="c1">// вернет 6</span>
+</span><span class='line'><span class="mi">5</span> <span class="k">do</span><span class="o">:</span> <span class="p">{</span><span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="nx">post</span><span class="p">;}</span> <span class="c1">// выведет на экран 01234 и вернет 5</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">5</span> <span class="nx">max</span><span class="o">:</span> <span class="mi">6</span> <span class="nx">dup</span><span class="o">:</span> <span class="mi">5</span><span class="p">;</span> <span class="c1">// цепочка сообщений, вернет [6, 6, 6, 6, 6]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>И наконец, существует так называемая функциональная нотация, потому что синтаксически она похожа на запись вызова функции в большинстве языков программирования. Сперва записывается имя сообщения, потом в скобках &ndash; список объектов. При этом, первым элементом является объект-получатель, а остальные элементы передаются в метод получателя как аргументы.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">dup</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// вернет [4, 4, 4]</span>
+</span><span class='line'><span class="nx">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span> <span class="c1">// вернет 6</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">dup</span><span class="p">(</span><span class="nx">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="mi">5</span><span class="p">);</span> <span class="c1">// цепочка сообщений в виде вложенности вызовов функций</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Последний способ является синтаксическим сахаром, который позволяет писать программы в функциональном стиле. Несмотря на то, что 5 и 6 являются объектами, которые взаимодействуют друг с другом с помощью сообщения max, код выглядит так, будто бы мы применили функцию max к двум целочисленным значениям 5 и 6.</p>
+
+<p>Рассмотрим некоторые свойства сообщений. Язык можно расширять, дополнять новыми конструкциями с помощью механизма сообщений. Например, привычные управляющие конструкции <strong>if-else</strong>, <strong>while</strong>, <strong>case</strong> в SuperCollider (а ранее, в Smalltalk) реализованы с помощью методов. На примере условной конструкции: получателем сообщения <code>if</code> является объект типа Boolean, который мы получаем в результате выполнения какого-нибудь логического выражения. Сообщение <code>if</code> также передает в метод две функции &ndash; первая будет выполнена в случае если выражение вернет <code>true</code>, вторая &ndash; в противоположном случае, при значении <code>false</code>. Таким образом, поведение метода <code>if</code> целиком соответствует поведению аналогичной конструкции из других императивных языков программирования.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">[</span><span class="kc">true</span><span class="p">,</span> <span class="kc">false</span><span class="p">].</span><span class="nx">choose</span><span class="p">.</span><span class="k">if</span><span class="p">({</span><span class="s2">&quot;Истина&quot;</span><span class="p">;},</span> <span class="p">{</span><span class="s2">&quot;Ложь&quot;</span><span class="p">;});</span>
+</span><span class='line'><span class="cm">/* в фунциональной нотации */</span>
+</span><span class='line'><span class="k">if</span> <span class="p">([</span><span class="kc">true</span><span class="p">,</span> <span class="kc">false</span><span class="p">].</span><span class="nx">choose</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;Истина&quot;</span><span class="p">;},</span> <span class="p">{</span><span class="s2">&quot;Ложь&quot;</span><span class="p">;});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В примерах мы уже видели как сообщения могут образовать цепочку (message chaining). Это становится возможным благодаря свойству методов &ndash; любой метод гарантировано возвращает какой-то объект. Если в методе не определено какое именно значение должно быть возвращено, по умолчанию метод возвращает ссылку на объект-получатель. Итак, объект-получатель, обработав сообщение, возвращает объект, которому так же можно послать сообщение и так до самого конца цепочки.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">10</span><span class="p">.</span><span class="nx">rand</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">dup</span><span class="p">.</span><span class="nx">dup</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">flat</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Математические выражения в SuperCollider записываются с помощью бинарных операций, но привычные правила приоритета операций здесь не сработают. В SuperCollider приоритеты всех бинарных операций равны и для вычислений справедливо правило левой ассоциативности &ndash; вычисления выполняются слева направо. Так <code>3 + 4 * 5</code> вернет 35, а не 23.</p>
+
+<p>В то же время, приоритетность у бинарных операций ниже, чем у сообщений:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="cm">/* метод max будет вызван раньше операции сложения, и выражение вернет 11 */</span>
+</span><span class='line'><span class="mi">5</span> <span class="o">+</span> <span class="mi">5</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/* max записан как бинарная операция, и по правилу левой ассоциативности выполнится после сложения. выражение вернет 10 */</span>
+</span><span class='line'><span class="mi">5</span> <span class="o">+</span> <span class="mi">5</span> <span class="nx">max</span><span class="o">:</span> <span class="mi">6</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Порядок выполнения можно легко переопределить с помощью скобок (они повышают приоритет операции).</p>
+
+<p>Сообщения могут передаваться объекту в качестве аргументов. Рассмотрим пример:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="mi">4</span><span class="p">.</span><span class="nx">perform</span><span class="p">([</span><span class="err">\</span><span class="nx">max</span><span class="p">,</span> <span class="err">\</span><span class="nx">min</span><span class="p">].</span><span class="nx">choose</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+</span><span class='line'><span class="mi">4</span><span class="p">.</span><span class="nx">tryPerform</span><span class="p">(</span><span class="err">\</span><span class="nx">doIt</span><span class="p">,</span> <span class="p">{</span><span class="o">|</span> <span class="nx">a</span> <span class="o">|</span> <span class="nx">a</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>perform</code> принимает в качестве первого аргумента сообщение, которое нужно передать объекту-получателю. Если объект не &ldquo;понимает&rdquo; сообщение, то есть у него нет соответствующего метода, генерируется исключение doesNotUnderstandError. <code>tryPerform</code> действует аналогично <code>perform</code>, но если объект не обладает соответствующим методом, сообщение ему не посылается и <code>tryPerform</code> возвращает <code>nil</code> <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>.</p>
+
+<p>Отдельно стоит упомянуть о передаче аргументов. Количество аргументов и их порядок определены в объявлении метода (вместе с именем метода они составляют его сигнатуру). Но при вызове метода не обязательно следовать сигнатуре. Можно передать меньшее количество аргументов (или большее). Для этого в методе нужно указать значения по умолчанию (для тех случаев, когда соответствующий аргумент можно опустить при вызове метода). В противном случае, такой аргумент будет иметь значение <code>nil</code>. Чтобы вызвать метод с произвольным порядком аргументов, в вызове необходимо обратиться к аргументу по его имени.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="o">~</span><span class="nx">func</span> <span class="o">=</span> <span class="p">{</span><span class="o">|</span><span class="nx">first</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">second</span> <span class="o">=</span> <span class="mi">4</span><span class="o">|</span>
+</span><span class='line'>    <span class="nx">first</span> <span class="o">*</span> <span class="nx">second</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="o">~</span><span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>    <span class="c1">// 8</span>
+</span><span class='line'><span class="o">~</span><span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span> <span class="c1">// 20</span>
+</span><span class='line'><span class="o">~</span><span class="nx">func</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">second</span><span class="o">:</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// 6</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<hr />
+
+<p>На этот раз все, в следующем посте перейдем к классам в SuperCollider.</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>В статье о потоках мы видели этот подход в действии. Объекты всех классов, начиная с абстрактного Object и включая классы Number, String, семейство паттерн-классов и т.д., реализуют методы <code>next</code>, <code>embedInStream</code>, <code>asStream</code>, но реализация отличается в зависимости от класса. Таким образом, каждый объект может отвечать на сообщение <code>embedInStream</code>.<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>Одно замечание по <code>tryPerform</code>. Метод <code>tryPerform</code> не увидит методы, добавленные во время выполнения программы (например, добавленные с помощью <code>addUniqueMethod</code>). Возможно, так происходит потому, что он проверяет среди методов, определенных в классе на этапе компиляции.<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+
+
+        <hr class="divider-short"/>
+
+        
+          <a class="pull-left" href="/overtone" title="Previous Post: Обзор Overtone">&laquo; Обзор Overtone</a>
+        
+
+        
+          <a class="pull-right" href="/supercollider-score-language-part-3" title="Next Post: Композиция в SuperCollider. Часть 3. Время и планировщики задач">Композиция в SuperCollider. Часть 3. Время и планировщики задач &raquo;</a>
+        
+
+        <div style="clear: both;"></div>
+
+        <hr class="divider-short"/>
+
+        
+        <section>
+          <h1>Комментарии</h1>
+          <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+        </section>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+<hr class="divider-short"/>
+
+<div class="archive-link">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+
+      </div>
+    </div>
+  </div>
+</div>
+    <footer id="footer" class="her-row">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+  <a href="/"><h4>Главная</h4></a>
+</div>
+
+<div class="col-md-2">
+  <div class="social-icon-list">
+    
+
+    
+    <a href="https://github.com/ekozhura"><img src="/images/glyphicons_social_21_github.png"/></a>
+    
+
+    
+
+    
+  </div>
+</div>
+
+<div class="pull-right">
+  <h4>Блог на основе <a href="http://octopress.org/">Octopress</a>. Дизайн темы <a href="http://AdrianArtiles.com">Adrian Artiles</a>.</h4>
+</div>
+
+
+    </div>
+  </div>
+</footer>
+
+    
+
+<script type="text/javascript">
+      var disqus_shortname = 'machinemusicianship';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ekozhura.github.io/supercollider-oop-part-1';
+        var disqus_url = 'http://ekozhura.github.io/supercollider-oop-part-1';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+  </body>
+</html>
