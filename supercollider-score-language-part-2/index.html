@@ -1,0 +1,340 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Композиция в SuperCollider. Часть 2. Введение в паттерны - Machine Musicianship</title>
+  <meta name="author" content="Evgeny Kozhura">
+
+  
+  <meta name="description" content="Композиция в SuperCollider. Часть 2. Введение в паттерны Добавлено 22.07.14 11:23PM В прошлой статье я рассмотрел потоки в SuperCollider и базовые &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ekozhura.github.io/supercollider-score-language-part-2">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Machine Musicianship" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-52650548-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+  <body>
+    <a href="/" class="home-icon">
+      <img src="/images/home.png"/>
+    </a>
+
+    <article role="article" class="full-single-article">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <h1>Композиция в SuperCollider. Часть 2. Введение в паттерны</h1>
+        <div class="meta">
+          Добавлено 
+
+
+
+
+
+
+
+
+  
+
+
+
+<time datetime="2014-07-22T23:23:03+03:00" pubdate data-updated="true">22.07.14 11:23PM</time>
+          
+
+
+        </div>
+        <p>В прошлой статье я рассмотрел потоки в SuperCollider и базовые возможности по их генерации. Между тем, в SuperCollider существуют более продвинутые способы определения потоков. Речь о паттернах и об их преимуществах.</p>
+
+<!--more-->
+
+
+<p>Паттерны &ndash; это классы, которые наследуются от базового класса Pattern и реализуют методы <strong>asStream</strong> и <strong>embedInStream</strong>. Для удобства названия классов-паттернов начинаются с прописной &ldquo;P&rdquo; (<strong>Pbind</strong>, <strong>Pseries</strong>, <strong>Pfunc</strong>, и т.д.).</p>
+
+<p>Паттерны в SuperCollider выполняют роль спецификаций, по которым строятся потоки, при этом, потоками они не являются (например, вызов <strong>next</strong> вернет ссылку на сам объект паттерна, как это определено в унаследованном методе <strong>next</strong> класса <strong>Object</strong>). Чтобы создать последовательность значений, необходимо вызвать метод <strong>asStream</strong> обьекта паттерна, который вернет экземпляр одного из подклассов <strong>Stream</strong>.</p>
+
+<p>Библиотека паттернов &ndash; это некоторое множество алгоритмов, которые мы можем использовать для создания потоков. Нет необходимости каждый раз писать свои генераторы для классов <strong>Routine</strong> и <strong>FuncStream</strong>, высока вероятность того, что необходимый алгоритм уже реализован в одном из паттерн-классов.</p>
+
+<p>К примеру, попробуем реализовать простейший счетчик с помощью <strong>Routine</strong>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">step</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">({</span>
+</span><span class='line'>    <span class="o">|</span> <span class="nx">inc</span> <span class="o">=</span> <span class="mi">0</span><span class="o">|</span>
+</span><span class='line'>    <span class="nx">loop</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">inc</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>        <span class="nx">inc</span> <span class="o">=</span> <span class="nx">inc</span> <span class="o">+</span> <span class="nx">step</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nx">postln</span><span class="p">;</span> <span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Аналогичную последовательность мы получим, если реализуем счетчик с помощью паттернов:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">d</span> <span class="o">=</span> <span class="nx">Pseries</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">inf</span><span class="p">).</span><span class="nx">asStream</span><span class="p">;</span>
+</span><span class='line'><span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">({</span>
+</span><span class='line'>    <span class="nx">d</span><span class="p">.</span><span class="nx">next</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>В общем случае, <strong>Pseries</strong> генерирует арифметическую прогрессию и принимает в качестве параметров начальное значение, разность между членами прогрессии и длину прогреcсии.</p>
+
+<p>Очевидны некоторые преимущества использования паттернов &ndash; запись более лаконична, код менее подвержен ошибкам, в действии &ndash; принцип повторного использования кода. Еще одним преимуществом паттернов в SuperCollider является их вложенность. Достигается это благодаря методу <strong>embedInStream</strong>, который позволяет &ldquo;встраивать&rdquo; в поток любой объект (числа, строки, символы, коллекции и т.д.).</p>
+
+<p>Попробую проиллюстрировать работу embedInStream таким примером. Скажем, внутри одного объекта <strong>Routine</strong> мы определяем еще один объект <strong>Routine</strong>. Первый, routeIn генерирует последовательность чисел 0, 1, 2, 3, 4, а  второй, routeOut &ndash; 200, 201, &hellip;, 209. Задача в том, чтобы включить значения внутреннего потока routeIn во внешний routeOut таким образом, чтобы при последовательном обходе элементов routeOut с помощью <strong>next</strong> мы получили имели доступ к обеим последовательностям как к единому целому. Сделать это можно таким способом:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">routeOut</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">count</span> <span class="o">=</span> <span class="nx">nil</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">routeIn</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>            <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">{</span><span class="nx">count</span> <span class="o">=</span> <span class="nx">routeIn</span><span class="p">.</span><span class="nx">next</span><span class="p">;</span> <span class="nx">count</span><span class="p">.</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span> <span class="p">({</span>
+</span><span class='line'>        <span class="nx">count</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>        <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="p">(</span><span class="nx">i</span><span class="o">+</span><span class="mi">200</span><span class="p">).</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="p">{(</span><span class="nx">m</span> <span class="o">=</span> <span class="nx">routeOut</span><span class="p">.</span><span class="nx">next</span><span class="p">).</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span><span class="p">{</span>
+</span><span class='line'>    <span class="nx">m</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>То есть, сначала мы создаем внутренний <strong>Routine</strong>, генерирующий последовательность [0, 1, 2, 3, 4]. Затем обходим эти элементы в цикле while и вызываем оператор <strong>yield</strong> для каждого элемента. Потом вызываем <strong>yield</strong> для элементов [200, 201, &hellip;, 209]. Таким образом, во внешнем <strong>Routine</strong> обе последовательности объединяются в один поток, по которому мы двигаемся с помощью <strong>routeOut.next</strong>.</p>
+
+<p>Метод <strong>embedInStream</strong> делает то же самое &ndash; встраивает объект в поток. Перепишем код:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">routeOut</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">routeIn</span> <span class="o">=</span> <span class="nx">Routine</span><span class="p">.</span><span class="k">new</span><span class="p">({</span>
+</span><span class='line'>        <span class="mi">5</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>            <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="nx">i</span><span class="p">.</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">}).</span><span class="nx">embedInStream</span><span class="p">;</span>
+</span><span class='line'>    <span class="mi">10</span><span class="p">.</span><span class="k">do</span><span class="p">{</span>
+</span><span class='line'>        <span class="nx">arg</span> <span class="nx">i</span><span class="p">;</span> <span class="p">(</span><span class="nx">i</span><span class="o">+</span><span class="mi">200</span><span class="p">).</span><span class="k">yield</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="p">{(</span><span class="nx">m</span> <span class="o">=</span> <span class="nx">routeOut</span><span class="p">.</span><span class="nx">next</span><span class="p">).</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span><span class="p">{</span>
+</span><span class='line'>    <span class="nx">m</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Единственный момент, который следует учесть, используя <strong>embedInStream</strong>. Поскольку внутри <strong>embedInStream</strong> вызывается оператор <strong>yield</strong>, то вызов <strong>embedInStream</strong> необходимо помещать в <strong>Routine</strong>, иначе будет сгенерировано исключение.</p>
+
+<p>Теперь перепишем этот пример таким образом, чтобы вместо объектов <strong>Routine</strong> использовать паттерны:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span>
+</span><span class='line'><span class="nx">a</span> <span class="o">=</span> <span class="nx">Pseq</span><span class="p">([</span>
+</span><span class='line'>        <span class="nx">Pseries</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+</span><span class='line'>        <span class="nx">Pseries</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">]).</span><span class="nx">asStream</span><span class="p">;</span>
+</span><span class='line'><span class="p">{(</span><span class="nx">m</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">next</span><span class="p">).</span><span class="nx">notNil</span><span class="p">}.</span><span class="k">while</span><span class="p">{</span>
+</span><span class='line'>    <span class="nx">m</span><span class="p">.</span><span class="nx">postln</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Pseq</strong> позволяет создать поток на основе заданого списка значений. В качестве параметров, помимо самого списка, принимает также число повторений списка в результирующем потоке. Когда мы вызываем метод <strong>asStream</strong> экземпляра класса <strong>Pseq</strong>, создается объект <strong>Routine</strong>, внутри которого вызывается метод <strong>embedInStream</strong>. Поведение этого метода для <strong>Pseq</strong> определено следующим образом &ndash; внутри цикла последовательно извлекается каждый элемент списка. В нашем случае каждый такой элемент &ndash; это экземляр класса <strong>Pseries</strong>. В этом же цикле управление переходит к методу <strong>embedInStream</strong>, определенному уже для <strong>Pseries</strong>. Таким образом, элементы, генерируемые объектами <strong>Pseries</strong>, встраиваются во внешний поток, который создается объектом класса <strong>Pseq</strong>.</p>
+
+<hr />
+
+<p>Итого. Паттерны позволяют инкапсулировать реализацию разнообразных генераторов потоков (получаются своего рода обертки каких-то подклассов класса <strong>Stream</strong>, а в большинстве случаев это будет <strong>Routine</strong>). Они также поддерживают вложенность и кое-какие операции трансформации (аналогичные тем, что были рассмотрены в статье о потоках), что позволяет создавать сложные паттерны из более простых. И последнее, потоки предоставляют пользователю простой и удобный API для работы с потоками. В следующей статье будет уделено больше внимания классам паттернов и операциям над ними.</p>
+
+
+        <hr class="divider-short"/>
+
+        
+          <a class="pull-left" href="/tidal" title="Previous Post: Обзор Tidal">&laquo; Обзор Tidal</a>
+        
+
+        
+          <a class="pull-right" href="/overtone" title="Next Post: Обзор Overtone">Обзор Overtone &raquo;</a>
+        
+
+        <div style="clear: both;"></div>
+
+        <hr class="divider-short"/>
+
+        
+        <section>
+          <h1>Комментарии</h1>
+          <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+        </section>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+<hr class="divider-short"/>
+
+<div class="archive-link">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+
+      </div>
+    </div>
+  </div>
+</div>
+    <footer id="footer" class="her-row">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+  <a href="/"><h4>Главная</h4></a>
+</div>
+
+<div class="col-md-2">
+  <div class="social-icon-list">
+    
+
+    
+    <a href="https://github.com/ekozhura"><img src="/images/glyphicons_social_21_github.png"/></a>
+    
+
+    
+
+    
+  </div>
+</div>
+
+<div class="pull-right">
+  <h4>Блог на основе <a href="http://octopress.org/">Octopress</a>. Дизайн темы <a href="http://AdrianArtiles.com">Adrian Artiles</a>.</h4>
+</div>
+
+
+    </div>
+  </div>
+</footer>
+
+    
+
+<script type="text/javascript">
+      var disqus_shortname = 'machinemusicianship';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ekozhura.github.io/supercollider-score-language-part-2';
+        var disqus_url = 'http://ekozhura.github.io/supercollider-score-language-part-2';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+  </body>
+</html>

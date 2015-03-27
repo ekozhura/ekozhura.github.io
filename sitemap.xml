@@ -3,6 +3,36 @@
   
   
   <url>
+    <loc>http://ekozhura.github.io/supercollider-oop-part-1</loc>
+    <lastmod>2014-10-24T08:49:44+03:00</lastmod>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://ekozhura.github.io/overtone</loc>
+    <lastmod>2014-09-14T20:39:51+03:00</lastmod>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://ekozhura.github.io/supercollider-score-language-part-2</loc>
+    <lastmod>2014-07-22T23:23:03+03:00</lastmod>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://ekozhura.github.io/tidal</loc>
+    <lastmod>2014-07-13T23:29:35+03:00</lastmod>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://ekozhura.github.io/supercollider-score-language-part-1</loc>
+    <lastmod>2014-07-13T09:04:59+03:00</lastmod>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://ekozhura.github.io/unit-generators-part-1</loc>
     <lastmod>2014-07-08T19:01:27+03:00</lastmod>
     <priority>0.8</priority>
@@ -17,21 +47,21 @@
   
   <url>
     <loc>http://ekozhura.github.io/</loc>
-    <lastmod>2014-07-08T20:33:44+03:00</lastmod>
+    <lastmod>2014-10-24T16:53:01+03:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   
   <url>
     <loc>http://ekozhura.github.io/blog/archives/</loc>
-    <lastmod>2014-07-08T20:33:44+03:00</lastmod>
+    <lastmod>2014-10-24T16:53:01+03:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://ekozhura.github.io/posts/</loc>
-    <lastmod>2014-07-08T20:33:44+03:00</lastmod>
+    <lastmod>2014-10-24T16:53:01+03:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

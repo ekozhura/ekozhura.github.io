@@ -75,7 +75,7 @@
 
 
         </div>
-        <p>Пионер компьютерной музыки Макс Метьюс в своем языке MUSIC III впервые реализовал (а в последующих версиях и развил) несколько важных идей. Впоследствии, эти идеи легли в основу многих современных языков для создания копьютерной музыки.</p>
+        <p>Пионер компьютерной музыки Макс Метьюс в своем языке MUSIC III впервые реализовал (а в последующих версиях и развил) несколько важных идей. Впоследствии, эти идеи легли в основу многих современных языков для создания компьютерной музыки.</p>
 
 <!-- more -->
 
@@ -123,17 +123,17 @@
 <span class='line-number'>12</span>
 <span class='line-number'>13</span>
 </pre></td><td class='code'><pre><code class='fortran'><span class='line'><span class="nv">INS</span> <span class="mi">0</span> <span class="mi">3</span><span class="p">;</span>
-</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">P5</span> <span class="nv">P7</span> <span class="nv">B2</span> <span class="nv">F3</span> <span class="nv">P30</span><span class="p">;</span>
-</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">P6</span> <span class="nv">P7</span> <span class="nv">B3</span> <span class="nv">F4</span> <span class="nv">P29</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P5</span> <span class="nv">P7</span> <span class="nv">B2</span> <span class="nv">F3</span> <span class="nv">P30</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">P6</span> <span class="nv">P7</span> <span class="nv">B3</span> <span class="nv">F4</span> <span class="nv">P29</span><span class="p">;</span>
 </span><span class='line'><span class="nv">AD2</span> <span class="nv">B2</span> <span class="nv">B3</span> <span class="nv">B2</span><span class="p">;</span>
-</span><span class='line'><span class="mi">0</span><span class="nv">SC</span> <span class="nv">B2</span> <span class="nv">P8</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">V1</span><span class="p">;</span>
-</span><span class='line'><span class="mi">0</span><span class="nv">UT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OSC</span> <span class="nv">B2</span> <span class="nv">P8</span> <span class="nv">B2</span> <span class="nv">F2</span> <span class="nv">V1</span><span class="p">;</span>
+</span><span class='line'><span class="nv">OUT</span> <span class="nv">B2</span> <span class="nv">B1</span><span class="p">;</span>
 </span><span class='line'><span class="k">END</span><span class="p">;</span>
 </span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">3</span> <span class="mf">.999</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
 </span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">4</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.999</span> <span class="mi">511</span><span class="p">;</span>
 </span><span class='line'><span class="nv">GEN</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mf">.99</span> <span class="mi">50</span> <span class="mf">.99</span> <span class="mi">205</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">306</span> <span class="o">-</span><span class="mf">.99</span> <span class="mi">461</span> <span class="mi">0</span> <span class="mi">511</span><span class="p">;</span>
-</span><span class='line'><span class="nv">N0T</span> <span class="mi">0</span> <span class="mi">3</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">2000</span> <span class="mf">.0128</span> <span class="mf">6.70</span><span class="p">;</span>
-</span><span class='line'><span class="nv">N0T</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">1</span> <span class="mi">2000</span> <span class="mi">0</span> <span class="mf">.0256</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nb">NOT </span><span class="mi">0</span> <span class="mi">3</span> <span class="mi">2</span> <span class="mi">0</span> <span class="mi">2000</span> <span class="mf">.0128</span> <span class="mf">6.70</span><span class="p">;</span>
+</span><span class='line'><span class="nb">NOT </span><span class="mi">2</span> <span class="mi">3</span> <span class="mi">1</span> <span class="mi">2000</span> <span class="mi">0</span> <span class="mf">.0256</span> <span class="mf">6.70</span><span class="p">;</span>
 </span><span class='line'><span class="nv">TER</span> <span class="mi">3</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure>
 
@@ -158,7 +158,19 @@
 
 
         <hr class="divider-short"/>
+
         
+          <a class="pull-left" href="/about-languages" title="Previous Post: О языках">&laquo; О языках</a>
+        
+
+        
+          <a class="pull-right" href="/supercollider-score-language-part-1" title="Next Post: Композиция в SuperCollider. Часть 1. Потоки">Композиция в SuperCollider. Часть 1. Потоки &raquo;</a>
+        
+
+        <div style="clear: both;"></div>
+
+        <hr class="divider-short"/>
+
         
         <section>
           <h1>Комментарии</h1>
@@ -177,11 +189,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-8 col-md-offset-2">
-        
-          <a class="pull-left" href="/about-languages" title="Previous Post: О языках">&laquo; О языках</a>
-        
 
-        
       </div>
     </div>
   </div>
